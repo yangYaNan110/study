@@ -1,0 +1,16 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "target": "ES2020",//编译成 ES2020 标准的 JS
+    "module": "commonjs",//使用 CommonJS 模块系统（require/module.exports）
+    "experimentalDecorators": true,//启用装饰器语法（@decorator）
+    "emitDecoratorMetadata": true,//发射装饰器元数据（配合 reflect-metadata）
+    "strict": true, //启用所有严格类型检查
+    "esModuleInterop": true //兼容 ES 模块和 CommonJS 的导入
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
