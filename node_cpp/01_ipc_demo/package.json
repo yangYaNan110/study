@@ -1,22 +1,22 @@
 {
-    "name": "ipc-demo-stdin-stdout",
-    "version": "1.0.0",
-    "description": "方案一：stdin/stdout + JSON - Node.js 与 C++ 的进程间通信",
-    "main": "index.js",
-    "scripts": {
-        "start": "node node/app.js",
-        "build": "cd cpp && g++ -std=c++17 -o worker worker.cpp && echo '✅ Compilation successful' && cd ..",
-        "clean": "rm -f cpp/worker"
-    },
-    "keywords": [
-        "ipc",
-        "nodejs",
-        "cpp",
-        "child_process",
-        "json",
-        "stdin",
-        "stdout"
-    ],
-    "author": "",
-    "license": "MIT"
+  "name": "ipc-demo-stdin-stdout",
+  "version": "1.0.0",
+  "description": "方案一：stdin/stdout + JSON - Node.js 与 C++ 的进程间通信",
+  "main": "index.js",
+  "scripts": {
+    "start": "node node/app.js",
+    "build": "cd cpp && g++ -std=c++17 -o worker worker.cpp && echo '✅ Compilation successful' && cd ..",
+    "clean": "rm -f cpp/worker"
+  },
+  "keywords": [
+    "ipc",
+    "nodejs",
+    "cpp",
+    "child_process",
+    "json",
+    "stdin",
+    "stdout"
+  ],
+  "author": "",
+  "license": "MIT"
 }
