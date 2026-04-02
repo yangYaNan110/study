@@ -3,6 +3,7 @@ import EmitParent from "./components/emit/Parent.vue";
 import HelloWorld from "./components/HelloWorld.vue";
 import PropsParent from "./components/props/Parent.vue";
 import SlotBase from "./components/slot/base/Parent.vue";
+import VModelBase from "./components/vmodel/Parent.vue";
 </script>
 
 <template>
@@ -35,7 +36,7 @@ import SlotBase from "./components/slot/base/Parent.vue";
       <article class="card card-peach">
         <div class="card-header">
           <span class="tag">Props</span>
-          <h2>组件传值</h2>
+          <h2>父组件给子组件传值</h2>
         </div>
         <EmitParent />
       </article>
@@ -43,9 +44,19 @@ import SlotBase from "./components/slot/base/Parent.vue";
       <article class="card card-peach">
         <div class="card-header">
           <span class="tag">Props</span>
-          <h2>组件传值</h2>
+          <h2>子组件给父组件传值</h2>
         </div>
         <SlotBase />
+      </article>
+
+      <article class="card card-peach">
+        <div class="card-header">
+          <span class="tag">Props</span>
+          <h2>
+            父组件把值传给子组件, 子组件通过 v-model 更新值, 父组件也能响应
+          </h2>
+        </div>
+        <VModelBase />
       </article>
     </section>
   </main>
