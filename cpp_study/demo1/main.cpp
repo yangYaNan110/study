@@ -1,6 +1,6 @@
 #include "src/math.h" 
 #include <iostream>
-
+using namespace mymath;
 int main() {
     std::cout << "开始测试" << std::endl;
     

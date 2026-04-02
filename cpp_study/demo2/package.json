@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "build": "bash build.sh",
+    "watch": "bash watch.sh"
+  }
+}

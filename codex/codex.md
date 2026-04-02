@@ -1,6 +1,6 @@
 ## openRouter配置
 
-1.  key:"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"
+1.  key:"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"
 2.  .codex/config.toml
 
 ```bash
