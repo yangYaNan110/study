@@ -1,0 +1,8 @@
+Version D
+
+This file is used to practice Git.
+Current chapter: D
+Added line from commit B.
+Added line from commit C.
+Added line from commit D.
+
