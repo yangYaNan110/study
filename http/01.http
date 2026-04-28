@@ -1,0 +1,64 @@
+@host = https://oxi.yangwudongxi.com
+@auth = eyJhbGciOiJIUzUxMiJ9.eyJjbGllbnRUeXBlIjo1LCJ1c2VyaWQiOiI4YzNmZGQ3MzE1NjE1MjYwMjhiZjY3ZDU5YTAzZTgyMSIsInBsYXRmb3JtIjo1LCJsb2dpbl91c2VyX2tleSI6IjJiYTE0NTE0MWM4MjIyZDVhZmRkY2U2Mzc3YjA4YWRiIn0.EwNVunJZgBK0BRI0uYR7vYIp734OPVv6o93hAeueaWB5sMffL08DmUvRnH7wrVaNX6WEgXkmFv0h9GLMC3dOWg
+@query = appid=b6187b85-7d2f-496c-abeb-dd1a76a5ff13&ig=&t=1776841471590&s=345EF5471AF4723D5BE7EC6036B68355CE58AB26&r=31590
+
+### REST Client self-check - simple GET
+GET https://httpbin.org/get
+Accept: application/json
+
+### getResource3 - form request
+POST {{host}}/estheticsopenapi/api/bimmodelresource/v1/selectPage?{{query}} HTTP/1.1
+Accept: application/json, text/plain, */*
+Authorization: {{auth}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="cidCategoryCode"
+
+041301
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="pageNo"
+
+1
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="tagValueJson"
+
+[]
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="tagListJson"
+
+[]
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="displayLevel"
+
+0
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="designId"
+
+16684eda-2129-44e6-9aeb-ad813aba3053
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="funRuleCategoryCode"
+
+002300010005
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="pageSize"
+
+20
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### getResource3 - json request
+POST {{host}}/estheticsopenapi/api/bimmodelresource/v1/selectPage?{{query}} HTTP/1.1
+Accept: application/json, text/plain, */*
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "cidCategoryCode": "041301",
+  "pageNo": 1,
+  "tagValueJson": [],
+  "tagListJson": [],
+  "displayLevel": 0,
+  "designId": "16684eda-2129-44e6-9aeb-ad813aba3053",
+  "funRuleCategoryCode": "002300010005",
+  "pageSize": 20
+}

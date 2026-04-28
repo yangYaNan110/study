@@ -4,6 +4,7 @@ import HelloWorld from "./components/HelloWorld.vue";
 import PropsParent from "./components/props/Parent.vue";
 import SlotBase from "./components/slot/base/Parent.vue";
 import VModelBase from "./components/vmodel/Parent.vue";
+import LuBanChi from "./components/lubanchi/index.vue";
 </script>
 
 <template>
@@ -57,6 +58,13 @@ import VModelBase from "./components/vmodel/Parent.vue";
           </h2>
         </div>
         <VModelBase />
+      </article>
+
+      <article class="card card-peach">
+        <div class="card-header">
+          <h2>鲁班尺组件开发</h2>
+        </div>
+        <LuBanChi />
       </article>
     </section>
   </main>

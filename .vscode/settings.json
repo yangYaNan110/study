@@ -1,0 +1,16 @@
+{
+  "cmake.sourceDirectory": "D:/yyn/study/cpp_study/demo1",
+  "http.proxy": "",
+  "http.proxySupport": "off",
+  "http.proxyStrictSSL": false,
+  "rest-client.logLevel": "verbose",
+  "rest-client.previewResponseInUntitledDocument": true,
+  "rest-client.previewColumn": "current",
+  "rest-client.previewResponsePanelTakeFocus": true,
+  "rest-client.showResponseInDifferentTab": true,
+  "rest-client.timeoutinmilliseconds": 30000,
+  "rest-client.excludeHostsForProxy": [
+    "httpbin.org",
+    "oxi.yangwudongxi.com"
+  ]
+}
