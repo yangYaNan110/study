@@ -1,0 +1,1293 @@
+@host = https://dev.yangwudongxi.com
+@auth = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjbGllbnRUeXBlIjo1LCJ1c2VyaWQiOiI4YzNmZGQ3MzE1NjE1MjYwMjhiZjY3ZDU5YTAzZTgyMSIsInBsYXRmb3JtIjo1LCJsb2dpbl91c2VyX2tleSI6IjM5MGE1ZTAyNTc0ZWI3MzgwMDc5NzEzY2JlYzBlYjdjIn0.AhTTip_YPRElpsKbOyiEggmlb5BrvrvEq78tZinV-hY
+
+@query=''
+
+
+# 定制品接口测试 https://s.apifox.cn/aa25dd5b-c5cc-4a9e-b4cd-22712a08f84d/453156588e0
+POST {{host}}/estheticsopenapi/api/quote/customize/v1/getOfferPrice HTTP/1.1
+Accept: application/json, text/plain, */*
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+      "actId": "{ebe4af26-004a-4322-a4b9-77267881b013}",
+      "cityCode": "330100",
+      "goodsList": [
+        {
+          "bimModelResourceId": 5164131346725125,
+          "engQty": "",
+          "goodsSkuId": 135985213270171654,
+          "tagDataList": [
+            {
+              "dictType": "20",
+              "tagCode": "W4429",
+              "tagName": "商品是否需要安装",
+              "tagValue": "011562"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4143",
+              "tagName": "上横挺高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4165",
+              "tagName": "左横挺宽",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4146",
+              "tagName": "中横挺高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0481",
+              "tagName": "门扇厚(Z)",
+              "tagValue": "31"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3930",
+              "tagName": "基础板件的材料分类",
+              "tagValue": "010708"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4145",
+              "tagName": "右横挺宽",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4147",
+              "tagName": "下横挺高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5915",
+              "tagName": "玻璃视觉分类",
+              "tagValue": "016878"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000029",
+              "tagName": "室内门品牌",
+              "tagValue": "00517"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "81",
+              "tagName": "通用色系（乐器、植物、硬体家具）视觉色系",
+              "tagValue": "675"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4334",
+              "tagName": "面积",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0829",
+              "tagName": "门扇高(Y)",
+              "tagValue": "2082"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W2495",
+              "tagName": "推拉门玻璃分类",
+              "tagValue": "007681"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4149",
+              "tagName": "玻璃骨架宽",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0828",
+              "tagName": "门扇宽(X)",
+              "tagValue": "900"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4150",
+              "tagName": "玻璃骨架高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3978",
+              "tagName": "室内门芯材质",
+              "tagValue": "010809"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W4224",
+              "tagName": "是否透光",
+              "tagValue": "011184"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0000000235",
+              "tagName": "玻璃厚度（MM)",
+              "tagValue": "000712"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W1687",
+              "tagName": "门扇可适配门类型",
+              "tagValue": "005850"
+            }
+          ]
+        },
+        {
+          "bimModelResourceId": 4514852004382469,
+          "engQty": "",
+          "goodsSkuId": 135983749122531334,
+          "tagDataList": [
+            {
+              "dictType": "20",
+              "tagCode": "W3909",
+              "tagName": "门套拼接方式",
+              "tagValue": "010668"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W4031",
+              "tagName": "门洞是否调整",
+              "tagValue": "010940"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4364",
+              "tagName": "开面门楣高",
+              "tagValue": "200"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4112",
+              "tagName": "关面套线高",
+              "tagValue": "60"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4150",
+              "tagName": "玻璃骨架高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4075",
+              "tagName": "见光宽",
+              "tagValue": "879"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W3902",
+              "tagName": "平开门开门方向（左右）",
+              "tagValue": "010642"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4153",
+              "tagName": "开面门套右宽",
+              "tagValue": "70"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4080",
+              "tagName": "开面套线高",
+              "tagValue": "60"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W4615",
+              "tagName": "是否可做门楣",
+              "tagValue": "012073"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4154",
+              "tagName": "门开面总宽",
+              "tagValue": "1019"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5621",
+              "tagName": "翻转状态1",
+              "tagValue": "016007"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4448",
+              "tagName": "开面门套高",
+              "tagValue": "70"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5719",
+              "tagName": "门锁是否可更换其他品牌",
+              "tagValue": "016294"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4081",
+              "tagName": "开面套线左宽",
+              "tagValue": "60"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4139",
+              "tagName": "门套扣墙值",
+              "tagValue": "379"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W5233",
+              "tagName": "门扇类型",
+              "tagValue": "014676"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5704",
+              "tagName": "门套和门扇饰面是否必须一致",
+              "tagValue": "016250"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W00000000401",
+              "tagName": "室内门材质",
+              "tagValue": "001657"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4066",
+              "tagName": "关面套线出墙厚",
+              "tagValue": "15"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4152",
+              "tagName": "开面门套左宽",
+              "tagValue": "70"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4082",
+              "tagName": "开面套线右宽",
+              "tagValue": "60"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4428",
+              "tagName": "数量",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W5906",
+              "tagName": "门洞基层封板材质",
+              "tagValue": "016850"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4449",
+              "tagName": "关面门套高",
+              "tagValue": "70"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4083",
+              "tagName": "关面套线左宽",
+              "tagValue": "60"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4089",
+              "tagName": "挡条厚",
+              "tagValue": "10"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3978",
+              "tagName": "室内门芯材质",
+              "tagValue": "010809"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5622",
+              "tagName": "翻转状态2",
+              "tagValue": "016009"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W4018",
+              "tagName": "室内平开门整门组合类型",
+              "tagValue": "010879"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4095",
+              "tagName": "门洞完成面厚",
+              "tagValue": "379"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W2217",
+              "tagName": "顶部距原始顶距离",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W4429",
+              "tagName": "商品是否需要安装",
+              "tagValue": "011562"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W3215",
+              "tagName": "顶部距相邻顶完成面距离",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W3728",
+              "tagName": "顶部距低位吊顶完成面距离",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4165",
+              "tagName": "左横挺宽",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5733",
+              "tagName": "关面门楣和套线关系",
+              "tagValue": "016333"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0833",
+              "tagName": "套板厚",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W2214",
+              "tagName": "顶部原始标高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5703",
+              "tagName": "门内侧外侧饰面是否必须一致",
+              "tagValue": "016248"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3901",
+              "tagName": "平开门开门方向（内外）",
+              "tagValue": "010640"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4438",
+              "tagName": "门扇安装留缝宽",
+              "tagValue": "4"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W2216",
+              "tagName": "顶部距水平基准线距离",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W2392",
+              "tagName": "平开门分类",
+              "tagValue": "007288"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0896",
+              "tagName": "开面套线出墙厚",
+              "tagValue": "15"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4143",
+              "tagName": "上横挺高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4076",
+              "tagName": "见光高",
+              "tagValue": "2092"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W6051",
+              "tagName": "门套形式",
+              "tagValue": "017375"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4334",
+              "tagName": "面积",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "Interior door type",
+              "tagName": "室内门类型",
+              "tagValue": "012971"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4159",
+              "tagName": "门安装打胶预留",
+              "tagValue": "6"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4265",
+              "tagName": "顶部装饰标高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4142",
+              "tagName": "K值",
+              "tagValue": "10"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4145",
+              "tagName": "右横挺宽",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "environmental protection class",
+              "tagName": "环保等级",
+              "tagValue": "012921"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4363",
+              "tagName": "开面门楣厚",
+              "tagValue": "9"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4365",
+              "tagName": "关面门楣宽",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4350",
+              "tagName": "门洞基层顶部距水平基准线距离",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4149",
+              "tagName": "玻璃骨架宽",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4147",
+              "tagName": "下横挺高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4146",
+              "tagName": "中横挺高",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4158",
+              "tagName": "墙附框厚",
+              "tagValue": "12"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4094",
+              "tagName": "门洞基层高",
+              "tagValue": "2088"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4092",
+              "tagName": "门洞基础高",
+              "tagValue": "2100"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W4830",
+              "tagName": "关面是否做门楣",
+              "tagValue": "013160"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W4829",
+              "tagName": "开面是否做门楣",
+              "tagValue": "013158"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3908",
+              "tagName": "是否带顶部套板",
+              "tagValue": "010665"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4881",
+              "tagName": "门关面是否通顶",
+              "tagValue": "013307"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4880",
+              "tagName": "门开面是否通顶",
+              "tagValue": "013305"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3913",
+              "tagName": "把手锁具一体设计",
+              "tagValue": "010676"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4366",
+              "tagName": "关面门楣厚",
+              "tagValue": "9"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4367",
+              "tagName": "关面门楣高",
+              "tagValue": "200"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "00027",
+              "tagName": "室内门平开门样式(关面)图库",
+              "tagValue": "00150"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000029",
+              "tagName": "室内门品牌",
+              "tagValue": "00517"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "00020",
+              "tagName": "室内门平开门样式(开面)图库",
+              "tagValue": "00138"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5023",
+              "tagName": "室内门面层工艺",
+              "tagValue": "013960"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5732",
+              "tagName": "开面门楣和套线关系",
+              "tagValue": "016331"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4208",
+              "tagName": "门洞基层厚",
+              "tagValue": "404"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W2287",
+              "tagName": "隐形门做法",
+              "tagValue": "007075"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3021",
+              "tagName": "门正视形状",
+              "tagValue": "008746"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W1436",
+              "tagName": "结构BIM属性",
+              "tagValue": "005326"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4091",
+              "tagName": "门洞基础宽",
+              "tagValue": "895"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4362",
+              "tagName": "开面门楣宽",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4157",
+              "tagName": "门关面总宽",
+              "tagValue": "1019"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4156",
+              "tagName": "关面门套右宽",
+              "tagValue": "70"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4090",
+              "tagName": "门洞基础墙厚",
+              "tagValue": "354"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4093",
+              "tagName": "门洞基层宽",
+              "tagValue": "871"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3991",
+              "tagName": "门套样式分类",
+              "tagValue": "010839"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4069",
+              "tagName": "门关面总高",
+              "tagValue": "2362"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4072",
+              "tagName": "门开面总高",
+              "tagValue": "2362"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5720",
+              "tagName": "更换门锁是否减价",
+              "tagValue": "016296"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5718",
+              "tagName": "门锁能否更换",
+              "tagValue": "016291"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4084",
+              "tagName": "关面套线右宽",
+              "tagValue": "60"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4155",
+              "tagName": "关面门套左宽",
+              "tagValue": "70"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0829",
+              "tagName": "门扇高(Y)",
+              "tagValue": "2082"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0481",
+              "tagName": "门扇厚(Z)",
+              "tagValue": "424.705"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0828",
+              "tagName": "门扇宽(X)",
+              "tagValue": "1009"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W4942",
+              "tagName": "门使用空间分类",
+              "tagValue": "013554"
+            }
+          ]
+        },
+        {
+          "bimModelResourceId": 4498144752187653,
+          "engQty": "",
+          "goodsSkuId": 124943459490082822,
+          "tagDataList": [
+            {
+              "dictType": "0",
+              "tagCode": "W0325",
+              "tagName": "长(X)",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0327",
+              "tagName": "厚(Y)",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0051",
+              "tagName": "门锁五金材质",
+              "tagValue": "002142"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4428",
+              "tagName": "数量",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0326",
+              "tagName": "宽(X)",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0052",
+              "tagName": "门锁分类",
+              "tagValue": "002145"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000095",
+              "tagName": "系统门窗五金品牌",
+              "tagValue": "00279"
+            }
+          ]
+        },
+        {
+          "bimModelResourceId": 4253922113691653,
+          "engQty": "",
+          "goodsSkuId": 135931653986754566,
+          "tagDataList": [
+            {
+              "dictType": "20",
+              "tagCode": "W4429",
+              "tagName": "商品是否需要安装",
+              "tagValue": "011562"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0325",
+              "tagName": "长(X)",
+              "tagValue": "131"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "81",
+              "tagName": "通用色系视觉色",
+              "tagValue": "674"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W1537",
+              "tagName": "使用位距地完成面距离",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4428",
+              "tagName": "数量",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000029",
+              "tagName": "室内门品牌",
+              "tagValue": "00517"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3913",
+              "tagName": "把手锁具一体设计",
+              "tagValue": "010676"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W00000002041",
+              "tagName": "门锁开锁方式类型",
+              "tagValue": "001848"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W5913",
+              "tagName": "商品配件类型",
+              "tagValue": "016862"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W3768",
+              "tagName": "宽(Z)",
+              "tagValue": "61.4093"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0328",
+              "tagName": "高(Y)",
+              "tagValue": "113"
+            }
+          ]
+        },
+        {
+          "bimModelResourceId": 5000514929499141,
+          "engQty": "",
+          "goodsSkuId": 124942800450629637,
+          "tagDataList": [
+            {
+              "dictType": "20",
+              "tagCode": "W00000002044",
+              "tagName": "合页安装方式",
+              "tagValue": "001850"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0325",
+              "tagName": "长(X)",
+              "tagValue": "11"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0051",
+              "tagName": "门锁五金材质",
+              "tagValue": "002142"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "63",
+              "tagName": "视觉色",
+              "tagValue": "516"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4428",
+              "tagName": "数量",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0052",
+              "tagName": "门锁分类",
+              "tagValue": "002145"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W3768",
+              "tagName": "宽(Z)",
+              "tagValue": "11"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000095",
+              "tagName": "系统门窗五金品牌",
+              "tagValue": "00279"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0327",
+              "tagName": "厚(Y)",
+              "tagValue": "113"
+            }
+          ]
+        },
+        {
+          "bimModelResourceId": 5000514929499141,
+          "engQty": "",
+          "goodsSkuId": 124942800450629637,
+          "tagDataList": [
+            {
+              "dictType": "20",
+              "tagCode": "W00000002044",
+              "tagName": "合页安装方式",
+              "tagValue": "001850"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0325",
+              "tagName": "长(X)",
+              "tagValue": "11"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0051",
+              "tagName": "门锁五金材质",
+              "tagValue": "002142"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "63",
+              "tagName": "视觉色",
+              "tagValue": "516"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4428",
+              "tagName": "数量",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0052",
+              "tagName": "门锁分类",
+              "tagValue": "002145"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W3768",
+              "tagName": "宽(Z)",
+              "tagValue": "11"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000095",
+              "tagName": "系统门窗五金品牌",
+              "tagValue": "00279"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0327",
+              "tagName": "厚(Y)",
+              "tagValue": "113"
+            }
+          ]
+        },
+        {
+          "bimModelResourceId": 6512026939497221,
+          "engQty": "",
+          "goodsSkuId": 136916322209570821,
+          "tagDataList": [
+            {
+              "dictType": "0",
+              "tagCode": "W0829",
+              "tagName": "门扇高(Y)",
+              "tagValue": "2082"
+            },
+            {
+              "dictType": "-1",
+              "tagCode": "81",
+              "tagName": "通用色系（乐器、植物、硬体家具）视觉色系",
+              "tagValue": ""
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3930",
+              "tagName": "基础板件的材料分类",
+              "tagValue": "010708"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W1687",
+              "tagName": "门扇可适配门类型",
+              "tagValue": "005848"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0828",
+              "tagName": "门扇宽(X)",
+              "tagValue": "900"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0481",
+              "tagName": "门扇厚(Z)",
+              "tagValue": "31"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000029",
+              "tagName": "室内门品牌",
+              "tagValue": "00279"
+            }
+          ]
+        },
+        {
+          "bimModelResourceId": 6512026939497221,
+          "engQty": "",
+          "goodsSkuId": 136916278077104133,
+          "tagDataList": [
+            {
+              "dictType": "0",
+              "tagCode": "W0829",
+              "tagName": "门扇高(Y)",
+              "tagValue": "2082"
+            },
+            {
+              "dictType": "-1",
+              "tagCode": "81",
+              "tagName": "通用色系（乐器、植物、硬体家具）视觉色系",
+              "tagValue": ""
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W3930",
+              "tagName": "基础板件的材料分类",
+              "tagValue": "010708"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W1687",
+              "tagName": "门扇可适配门类型",
+              "tagValue": "005848"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0828",
+              "tagName": "门扇宽(X)",
+              "tagValue": "871"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0481",
+              "tagName": "门扇厚(Z)",
+              "tagValue": "3"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000029",
+              "tagName": "室内门品牌",
+              "tagValue": "00279"
+            }
+          ]
+        },
+        {
+          "bimModelResourceId": 5000514929499141,
+          "engQty": "",
+          "goodsSkuId": 124942800450629637,
+          "tagDataList": [
+            {
+              "dictType": "20",
+              "tagCode": "W00000002044",
+              "tagName": "合页安装方式",
+              "tagValue": "001850"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0325",
+              "tagName": "长(X)",
+              "tagValue": "11"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4537",
+              "tagName": "设计结果是否产品套餐",
+              "tagValue": "011917"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0051",
+              "tagName": "门锁五金材质",
+              "tagValue": "002142"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "63",
+              "tagName": "视觉色",
+              "tagValue": "516"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W4428",
+              "tagName": "数量",
+              "tagValue": "0"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "W0052",
+              "tagName": "门锁分类",
+              "tagValue": "002145"
+            },
+            {
+              "dictType": "1",
+              "tagCode": "W4508",
+              "tagName": "设计结果是否是定制",
+              "tagValue": "011862"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W3768",
+              "tagName": "宽(Z)",
+              "tagValue": "11"
+            },
+            {
+              "dictType": "20",
+              "tagCode": "0000095",
+              "tagName": "系统门窗五金品牌",
+              "tagValue": "00279"
+            },
+            {
+              "dictType": "0",
+              "tagCode": "W0327",
+              "tagName": "厚(Y)",
+              "tagValue": "113"
+            }
+          ]
+        }
+      ],
+      "mainSkuId": 135983749122531334,
+      "provinceCode": "330000"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+# {
+# 	"actId": "{ebe4af26-004a-4322-a4b9-77267881b013}",
+# 	"cityCode": "330100",
+# 	"goodsList": [
+# 		{
+# 			"bimModelResourceId": 5164131346725125,
+# 			"engQty": "",
+# 			"goodsSkuId": 135983749122531334,
+# 			"tagDataList": [
+# 				{
+# 					"dictType": "20",
+# 					"tagCode": "W4429",
+# 					"tagName": "商品是否需要安装",
+# 					"tagValue": "011562"
+# 				}
+# 			]
+# 		}
+# 	],
+# 	"mainSkuId": 135983749122531334,
+# 	"provinceCode": "330000"
+# }

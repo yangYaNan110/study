@@ -11,6 +11,7 @@
   "rest-client.timeoutinmilliseconds": 30000,
   "rest-client.excludeHostsForProxy": [
     "httpbin.org",
-    "oxi.yangwudongxi.com"
+    "oxi.yangwudongxi.com",
+    "dev.yangwudongxi.com"
   ]
 }
