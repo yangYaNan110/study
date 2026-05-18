@@ -7,3 +7,10 @@ coverage/
 Thumbs.db
 three/three.js-dev.zip
 three/*
+
+build/
+.vs/
+.vscode/
+*.exe
+*.o
+*.obj
