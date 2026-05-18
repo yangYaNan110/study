@@ -1,11 +1,18 @@
-#include "Core/Logger.h"
-#include "Core/Config.h"
-#include "Core/Constant.h"
+// #include "Network/Server.h"
+
+// int main()
+// {
+//     Server server;
+//     server.start();
+//     return 0;
+// }
+
+#include "Network/Client.h"
 
 int main()
 {
-    Logger::info("TinyChat Start");
 
-    Logger::info("Server Port:" + std::to_string(Config::port));
+    Client client;
+    client.start();
     return 0;
 }
