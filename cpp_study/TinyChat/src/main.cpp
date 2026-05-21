@@ -1,7 +1,18 @@
-#include <iostream>
+// #include "Network/Server.h"
+
+// int main()
+// {
+//     Server server;
+//     server.start();
+//     return 0;
+// }
+
+#include "Network/Client.h"
 
 int main()
 {
-    std::cout << "TinyChat Start" << std::endl;
+
+    Client client;
+    client.start();
     return 0;
 }

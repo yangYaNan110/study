@@ -379,3 +379,14 @@ TinyChat/
 ```
 
 ```
+
+```bash
+mkdir build
+
+cd build
+
+cmake ..
+
+cmake --build .
+
+```
