@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body></body>
+</html>
+<script>
+  const raw = { count: 0, id: 1 }; //原始数据
+  let proxy = new Proxy(raw, {
+    get(target, key) {
+      console.log("有人读取了:", target == raw, key);
+      return target[key];
+    },
+    set(target, key, value) {
+      console.log("有人修改了:", key, "新值:", value, "target:", target);
+      target[key] = value;
+      return true;
+    },
+  });
+  proxy.count; //读取
+  proxy.count = 1;
+</script>

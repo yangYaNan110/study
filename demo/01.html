@@ -5,16 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
   </head>
-  <body></body>
+  <body>
+    <button onclick="main()">test</button>
+  </body>
 </html>
 <script>
-  class A {
-    name = "A";
+  // class A {
+  //   name = "A";
+  // }
+
+  // let a = new A();
+  // let b = new A();
+  // A.prototype.age = 18;
+  // console.log(a.age);
+  // console.log(b.age);
+
+  // function main() {
+  //   console.log("测试main:::");
+
+  //   sleep(5000);
+  // }
+
+  // async function sleep(time = 1000) {
+  //   return new Promise((resolve) => {
+  //     // setTimeout(() => {
+  //     //   console.log("睡眠结束");
+  //     //   resolve();
+  //     // }, time);
+  //     setTimeout(() => {
+  //       let t = Date.now();
+  //       while (Date.now() - t < time) {
+  //         // do nothing
+  //       }
+  //       resolve();
+  //       console.log("睡眠结束");
+  //     }, 1);
+  //   });
+  // }
+
+  function main() {
+    heavyWork();
+    alert("11");
   }
 
-  let a = new A();
-  let b = new A();
-  A.prototype.age = 18;
-  console.log(a.age);
-  console.log(b.age);
+  function heavyWork() {
+    for (let i = 0; i < 100000000; i++) {
+      Math.sqrt(i);
+    }
+  }
 </script>

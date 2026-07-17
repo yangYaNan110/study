@@ -6,12 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 include_directories(include)
 
-file(
-    GLOB_RECURSE SRC
-    *.cpp
-)
-
 add_executable(
     demo3-cpp11+
-    ${SRC}
+    main.cpp
 )
