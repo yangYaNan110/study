@@ -1,5 +1,5 @@
 #pragma once
-
+#include <vector>
 /**
  * TCP 服务端
  * 职责：
@@ -16,4 +16,14 @@ class Server
 public:
     // 启动服务
     void start();
+
+private:
+    // 所有客户端连接
+    std::vector<int> clients;
+
+    // 客户端处理线程
+    void handleClient(int clientFd);
+
+    // 广播
+    void broadcast(const char *msg, int sender);
 };

@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include <cstring>
-
+#include <thread>
 void Server::start()
 {
     // 创建socket
@@ -40,16 +40,55 @@ void Server::start()
 
     // 等待客户端连接
 
-    int clinetFd = accept(serverFd, nullptr, nullptr);
-    Logger::info("Client Connected");
+    // int clinetFd = accept(serverFd, nullptr, nullptr);
+    while (true)
+    {
+        int clientFd = accept(serverFd, nullptr, nullptr);
 
-    char buffer[Constant::BUFFER_SIZE] = {0};
+        clients.push_back(clientFd);
 
-    recv(clinetFd, buffer, sizeof(buffer), 0);
+        Logger::info("clinet joined");
 
-    Logger::info("receive:" + std::string(buffer));
+        std::thread(&Server::handleClient, this, clientFd).detach();
+    }
+    // Logger::info("Client Connected");
 
-    close(clinetFd);
+    // char buffer[Constant::BUFFER_SIZE] = {0};
 
-    close(serverFd);
+    // recv(clinetFd, buffer, sizeof(buffer), 0);
+
+    // Logger::info("receive:" + std::string(buffer));
+
+    // close(clinetFd);
+
+    // close(serverFd);
+}
+
+void Server::handleClient(int clientFd)
+{
+    char buffer[Constant::BUFFER_SIZE];
+    while (true)
+    {
+        memset(buffer, 0, sizeof(buffer));
+        int len = recv(clientFd, buffer, sizeof(buffer), 0);
+        if (len <= 0)
+        {
+            break;
+        }
+        Logger::info(buffer);
+
+        broadcast(buffer, clientFd);
+    }
+}
+
+void Server::broadcast(const char *msg, int sender)
+{
+    for (auto client : clients)
+    {
+        if (client == sender)
+        {
+            continue;
+        }
+        send(client, msg, strlen(msg), 0);
+    }
 }

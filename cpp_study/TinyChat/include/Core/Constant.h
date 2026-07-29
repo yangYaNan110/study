@@ -22,6 +22,6 @@ namespace Constant
     // socket 读取buffer大小
     constexpr int BUFFER_SIZE = 1024;
 
-    // 最大连接人数
-    constexpr int MAX_CLIENT = 100;
+    // 最大客户端数量
+    constexpr int MAX_CLIENT = 10;
 }

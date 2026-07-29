@@ -10,6 +10,8 @@
 
 #include <cstring>
 
+#include <iostream>
+
 void Client::start()
 {
     int clientFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -24,11 +26,18 @@ void Client::start()
 
     connect(clientFd, (sockaddr *)&serverAddress, sizeof(serverAddress));
 
-    const char *msg = "hello tinyChat";
+    std::string msg = "hello tinyChat";
 
-    send(clientFd, msg, strlen(msg), 0);
+    // send(clientFd, msg, strlen(msg), 0);
 
-    Logger::info("message send");
+    // Logger::info("message send");
 
-    close(clientFd);
+    // close(clientFd);
+
+    while (true)
+    {
+        getline(std::cin, msg);
+        send(clientFd, msg.c_str(), msg.size(), 0);
+        Logger::info("message send:" + msg);
+    }
 }
