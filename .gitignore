@@ -14,3 +14,10 @@ build/
 *.exe
 *.o
 *.obj
+
+3dobj/*
+
+3dobj/
+token.js
+落汤鸡/*
+落汤鸡/

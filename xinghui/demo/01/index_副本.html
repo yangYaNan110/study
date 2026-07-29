@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>3D OBJ 111</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.25.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.25.0/mapbox-gl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.18.2/dist/lil-gui.umd.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+    <script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+
+        import { MAPBOX_TOKEN } from './token.js';
+
+        const baseMapStyles = {
+            '卫星影像': 'mapbox://styles/mapbox/satellite-v9',
+            '卫星影像+标注': 'mapbox://styles/mapbox/satellite-streets-v12',
+            '标准街道': 'mapbox://styles/mapbox/streets-v12',
+            '浅色': 'mapbox://styles/mapbox/light-v11',
+            '深色': 'mapbox://styles/mapbox/dark-v11',
+        };
+
+        let currentBaseMap = '卫星影像';
+
+        const layerVisibility = {
+            imageLayer: true,
+            modelVisible: true,
+        };
+
+        const terrainParams = {
+            enabled: true,
+            exaggeration: 1.0,
+        };
+
+        const modelCenterParams = {
+            x: -95.92740622846694,
+            y: 41.11305358174491,
+            z: 36,
+        };
+
+        const modelMoveParams = {
+            step: 2,
+            moveForward: () => moveModel(0, modelMoveParams.step, 0),
+            moveBackward: () => moveModel(0, -modelMoveParams.step, 0),
+            moveUp: () => moveModel(0, 0, modelMoveParams.step),
+            moveDown: () => moveModel(0, 0, -modelMoveParams.step),
+            moveLeft: () => moveModel(-modelMoveParams.step, 0, 0),
+            moveRight: () => moveModel(modelMoveParams.step, 0, 0),
+        };
+
+        const imageSourceId = 'image-source';
+        const imageLayerId = 'image-layer';
+        const imageUrl = './3dobj/dom/{z}/{x}/{y}.png';
+
+        // 从模型元数据读取的精确原点；与控制面板的初始经纬度保持同一来源。
+        const modelOrigin = [modelCenterParams.x, modelCenterParams.y];
+        const modelAltitude = 0;
+        const modelRotate = {
+            x: 0,
+            y: 0,
+            z: 0,
+        };
+
+        let map = null;
+        let customLayer = null;
+        let scene = null;
+        let renderer = null;
+        let camera = null;
+        let objModel = null;
+        let modelTransform = {};
+
+        /** 将地心地固坐标（ECEF，米）转换为经度、纬度和海拔。 */
+        function ecefToLla(x, y, z) {
+            const a = 6378137.0;
+            const b = 6356752.314245;
+            const e2 = 1 - (b * b) / (a * a);
+            const ep2 = (a * a - b * b) / (b * b);
+            const p = Math.sqrt(x * x + y * y);
+            const theta = Math.atan2(z * a, p * b);
+            const sinTheta = Math.sin(theta);
+            const cosTheta = Math.cos(theta);
+            const lon = Math.atan2(y, x);
+            // Bowring 公式：使用 sin^3/cos^3 项，避免旧实现带来约 40m 的纬度误差。
+            const lat = Math.atan2(
+                z + ep2 * b * sinTheta * sinTheta * sinTheta,
+                p - e2 * a * cosTheta * cosTheta * cosTheta
+            );
+            const N = a / Math.sqrt(1 - e2 * Math.sin(lat) * Math.sin(lat));
+            const alt = p / Math.cos(lat) - N;
+            return [lon * 180 / Math.PI, lat * 180 / Math.PI, alt];
+        }
+
+        /** 将经度、纬度、海拔（LLA）转换为地心地固坐标（ECEF，米）。 */
+        function llaToEcef(lon, lat, alt) {
+            const a = 6378137.0;
+            const b = 6356752.314245;
+            const e2 = 1 - (b * b) / (a * a);
+            const lonRad = lon * Math.PI / 180;
+            const latRad = lat * Math.PI / 180;
+            const N = a / Math.sqrt(1 - e2 * Math.sin(latRad) * Math.sin(latRad));
+            const x = (N + alt) * Math.cos(latRad) * Math.cos(lonRad);
+            const y = (N + alt) * Math.cos(latRad) * Math.sin(lonRad);
+            const z = (N * (1 - e2) + alt) * Math.sin(latRad);
+            return [x, y, z];
+        }
+
+        /**
+         * 将 OBJ 的 ENU 米坐标逐顶点投影到 Mapbox Mercator 坐标。
+         *
+         * 原来的做法是使用模型原点处的一个比例尺，将整个几公里范围的 OBJ 线性缩放。
+         * 这里改为：ENU -> ECEF -> LLA -> Mercator。每个顶点使用自身的经纬度，
+         * 因而不会因 Web Mercator 比例随纬度变化而造成模型两侧与中部对不齐。
+         */
+        function projectEnuVerticesToMercator(object) {
+            // ENU 原点使用模型元数据中的精确经纬度与海拔。
+            const [originEcefX, originEcefY, originEcefZ] = llaToEcef(
+                modelOrigin[0],
+                modelOrigin[1],
+                modelAltitude
+            );
+            const longitude = modelOrigin[0] * Math.PI / 180;
+            const latitude = modelOrigin[1] * Math.PI / 180;
+
+            // 构建 ENU 三个单位轴在 ECEF 坐标中的方向向量。
+            const east = [-Math.sin(longitude), Math.cos(longitude), 0];
+            const north = [
+                -Math.sin(latitude) * Math.cos(longitude),
+                -Math.sin(latitude) * Math.sin(longitude),
+                Math.cos(latitude),
+            ];
+            const up = [
+                Math.cos(latitude) * Math.cos(longitude),
+                Math.cos(latitude) * Math.sin(longitude),
+                Math.sin(latitude),
+            ];
+
+            // 以模型原点为锚点存储相对 Mercator 坐标；渲染时再整体平移到地图位置。
+            const mercatorOrigin = mapboxgl.MercatorCoordinate.fromLngLat(
+                modelOrigin,
+                modelAltitude
+            );
+
+            object.traverse((child) => {
+                if (!child.isMesh || !child.geometry?.attributes?.position) return;
+
+                const position = child.geometry.attributes.position;
+
+                // 对每个 ENU 顶点执行精确的地球坐标与投影转换。
+                for (let index = 0; index < position.count; index += 1) {
+                    const eastMeters = position.getX(index);
+                    const northMeters = position.getY(index);
+                    const upMeters = position.getZ(index);
+
+                    const ecefX = originEcefX
+                        + eastMeters * east[0]
+                        + northMeters * north[0]
+                        + upMeters * up[0];
+                    const ecefY = originEcefY
+                        + eastMeters * east[1]
+                        + northMeters * north[1]
+                        + upMeters * up[1];
+                    const ecefZ = originEcefZ
+                        + eastMeters * east[2]
+                        + northMeters * north[2]
+                        + upMeters * up[2];
+
+                    const [vertexLon, vertexLat, vertexAltitude] = ecefToLla(
+                        ecefX,
+                        ecefY,
+                        ecefZ
+                    );
+                    const vertexMercator = mapboxgl.MercatorCoordinate.fromLngLat(
+                        [vertexLon, vertexLat],
+                        vertexAltitude
+                    );
+
+                    position.setXYZ(
+                        index,
+                        vertexMercator.x - mercatorOrigin.x,
+                        vertexMercator.y - mercatorOrigin.y,
+                        vertexMercator.z - mercatorOrigin.z
+                    );
+                }
+
+                // 通知 Three.js 顶点缓冲区已被改写，并重建包围体。
+                position.needsUpdate = true;
+                child.geometry.computeBoundingBox();
+                child.geometry.computeBoundingSphere();
+            });
+        }
+
+        /** 在控制台输出当前地图视角、模型位置/可见性和地形配置，便于调试。 */
+        function logMapState() {
+            if (!map) return;
+            const mapState = {
+                map: {
+                    zoom: map.getZoom(),
+                    pitch: map.getPitch(),
+                    bearing: map.getBearing(),
+                    center: map.getCenter().toArray(),
+                },
+                model: {
+                    visible: layerVisibility.modelVisible,
+                    center: {
+                        lon: modelCenterParams.x,
+                        lat: modelCenterParams.y,
+                        height: modelCenterParams.z,
+                        ecef: llaToEcef(modelCenterParams.x, modelCenterParams.y, modelCenterParams.z),
+                    },
+                },
+                terrain: {
+                    enabled: terrainParams.enabled,
+                    exaggeration: terrainParams.exaggeration,
+                },
+            };
+            console.log('=== 地图状态 ===', mapState);
+        }
+
+        /** 创建 Mapbox 地图，并在样式加载后挂载影像、地形、Three.js 模型和控制面板。 */
+        function init() {
+            map = new mapboxgl.Map({
+                accessToken: MAPBOX_TOKEN,
+                container: 'map',
+                style: baseMapStyles[currentBaseMap],
+                zoom: 13,
+                center: [-95.904606, 41.116996],
+                pitch: 0,
+                antialias: true,
+            });
+
+            map.on('style.load', () => {
+                addImageLayer();
+                addTerrain();
+                addCustomLayer();
+                addGUI();
+
+            });
+            map.on('load', () => {
+                applyModelCenter();
+            })
+            map.on('zoom', logMapState);
+            map.on('move', logMapState);
+        }
+
+        /** 注册本地瓦片影像源，并按当前配置添加或恢复其栅格图层。 */
+        function addImageLayer() {
+            if (!map.getSource(imageSourceId)) {
+                map.addSource(imageSourceId, {
+                    type: 'raster',
+                    tiles: [imageUrl],
+                    tileSize: 256,
+                });
+            }
+
+            if (!map.getLayer(imageLayerId)) {
+                map.addLayer({
+                    id: imageLayerId,
+                    type: 'raster',
+                    source: imageSourceId,
+                    layout: {
+                        visibility: layerVisibility.imageLayer ? 'visible' : 'none',
+                    },
+                });
+            }
+        }
+
+        /** 注册 Mapbox DEM 高程数据源，并根据开关启用或关闭三维地形。 */
+        function addTerrain() {
+            if (!map.getSource('mapbox-dem')) {
+                map.addSource('mapbox-dem', {
+                    type: 'raster-dem',
+                    url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                    tileSize: 512,
+                    maxzoom: 14,
+                });
+            }
+
+            if (terrainParams.enabled) {
+                map.setTerrain({
+                    source: 'mapbox-dem',
+                    exaggeration: terrainParams.exaggeration,
+                });
+            } else {
+                map.setTerrain(null);
+            }
+        }
+
+        /** 在地形已启用时，更新地形的垂直夸张倍数。 */
+        function updateTerrainExaggeration(value) {
+            if (terrainParams.enabled) {
+                map.setTerrain({
+                    source: 'mapbox-dem',
+                    exaggeration: value,
+                });
+            }
+        }
+
+        /** 根据控制面板的开关启用或清除地图地形。 */
+        function toggleTerrain(enabled) {
+            if (enabled) {
+                map.setTerrain({
+                    source: 'mapbox-dem',
+                    exaggeration: terrainParams.exaggeration,
+                });
+            } else {
+                map.setTerrain(null);
+            }
+        }
+
+        /** 切换本地栅格影像图层的显示状态。 */
+        function toggleImageLayer(visible) {
+            if (map.getLayer(imageLayerId)) {
+                map.setLayoutProperty(imageLayerId, 'visibility', visible ? 'visible' : 'none');
+            }
+        }
+
+        /** 切换已加载 OBJ 模型的显示状态，并记录当前状态。 */
+        function toggleModelVisible(visible) {
+            console.log("切换模型显示隐藏....yyn");
+
+            if (objModel) {
+                objModel.visible = visible;
+            }
+            logMapState();
+        }
+
+        /** 将面板中的经纬度和高度转换为墨卡托坐标，作为模型的新定位点。 */
+        function applyModelCenter() {
+            if (!map || !objModel) return;
+
+            const modelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
+                [modelCenterParams.x, modelCenterParams.y],
+                modelCenterParams.z
+            );
+
+            modelTransform.translateX = modelAsMercatorCoordinate.x;
+            modelTransform.translateY = modelAsMercatorCoordinate.y;
+            modelTransform.translateZ = modelAsMercatorCoordinate.z;
+
+            logMapState();
+        }
+
+        /**
+         * 按米移动模型：先在墨卡托坐标中偏移，再同步回经纬度、高度和渲染变换。
+         * dx、dy、dz 分别表示东西、南北和垂直方向的位移。
+         */
+        function moveModel(dx, dy, dz) {
+            if (!map || !objModel) return;
+
+            const currentMercator = mapboxgl.MercatorCoordinate.fromLngLat(
+                [modelCenterParams.x, modelCenterParams.y],
+                modelCenterParams.z
+            );
+
+            const scale = currentMercator.meterInMercatorCoordinateUnits();
+
+            const newX = currentMercator.x + dx * scale;
+            const newY = currentMercator.y + dy * scale;
+            const newZ = currentMercator.z + dz * scale;
+
+            const newMercator = new mapboxgl.MercatorCoordinate(newX, newY, newZ);
+            const newLngLat = newMercator.toLngLat();
+
+            modelCenterParams.x = newLngLat.lng;
+            modelCenterParams.y = newLngLat.lat;
+            modelCenterParams.z = newMercator.toAltitude();
+
+            modelTransform.translateX = newX;
+            modelTransform.translateY = newY;
+            modelTransform.translateZ = newZ;
+
+            logMapState();
+        }
+
+        /** 切换 Mapbox 底图样式，并在新样式就绪后重新添加自定义影像和地形。 */
+        function changeBaseMap(styleName) {
+            const styleUrl = baseMapStyles[styleName];
+            if (styleUrl) {
+                currentBaseMap = styleName;
+                map.setStyle(styleUrl, {
+                    preserve: ['camera', 'sprite'],
+                });
+
+                map.once('styledata', () => {
+                    addImageLayer();
+                    addTerrain();
+                });
+            }
+        }
+
+        /**
+         * 创建 Mapbox Custom Layer：初始化 Three.js 场景、加载 OBJ，并在每帧将其绘制到地图画布。
+         */
+        function addCustomLayer() {
+            // 输出当前模型的地理坐标和海拔，便于确认初始化参数是否正确。
+            console.log('addCustomLayer:::yyn...',modelOrigin,modelAltitude);
+
+            // 将经纬度和海拔转换为 Mapbox 使用的墨卡托坐标。
+            const modelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
+                modelOrigin,
+                modelAltitude
+            );
+
+            // 保存模型在地图坐标系中的平移、旋转与缩放参数，供每帧渲染时使用。
+            modelTransform = {
+                // 使用转换后的墨卡托坐标作为模型原点。
+                translateX: modelAsMercatorCoordinate.x,
+                translateY: modelAsMercatorCoordinate.y,
+                translateZ: modelAsMercatorCoordinate.z,
+                // 保存模型的初始旋转角度。
+                rotateX: modelRotate.x,
+                rotateY: modelRotate.y,
+                rotateZ: modelRotate.z,
+            };
+
+            // 定义符合 Mapbox Custom Layer 规范的三维图层。
+            customLayer = {
+                // 图层的唯一标识。
+                id: '3d-model',
+                // 声明为自定义图层。
+                type: 'custom',
+                // 声明为 3D 渲染，使其参与地图的三维渲染流程。
+                renderingMode: '3d',
+                /** 图层加入地图时初始化 Three.js 渲染环境和 OBJ 模型。 */
+                onAdd: function (map, gl) {
+                    // 创建相机；投影矩阵会在 render 中由 Mapbox 的矩阵更新。
+                    camera = new THREE.Camera();
+                    // 创建承载灯光和 OBJ 模型的 Three.js 场景。
+                    scene = new THREE.Scene();
+
+                    // 添加第一盏平行光，为模型提供一个方向上的主光照。
+                    const directionalLight = new THREE.DirectionalLight(0xffffff);
+                    // 设置光源位置并归一化方向向量。
+                    directionalLight.position.set(0, -70, 100).normalize();
+                    // 将主光源加入场景。
+                    scene.add(directionalLight);
+
+                    // 添加另一侧的平行光，减少模型背面的阴暗区域。
+                    const directionalLight2 = new THREE.DirectionalLight(0xffffff);
+                    // 设置第二盏平行光的位置并归一化其方向。
+                    directionalLight2.position.set(0, 70, 100).normalize();
+                    // 将第二盏平行光加入场景。
+                    scene.add(directionalLight2);
+
+                    // 添加环境光，为所有表面提供基础亮度。
+                    const ambientLight = new THREE.AmbientLight(0x404040);
+                    // 将环境光加入场景。
+                    scene.add(ambientLight);
+
+                    // 创建 OBJ 加载器，用于读取本地三维模型文件。
+                    const loader = new OBJLoader();
+                    // 异步加载 OBJ 文件，并分别处理成功、进度和失败情况。
+                    loader.load(
+                        // 指定 OBJ 文件的相对路径。
+                        './3dobj/enu/model_enu_xyz_noflip.obj',
+                        // './3dobj/enu/test.obj',
+
+                        (object) => {
+                            console.log('object',object);
+                            // 缓存已加载的模型对象，供其他交互逻辑使用。
+                            objModel = object;
+                            // 将每个 ENU 米单位顶点转换为自身对应的 Mercator 坐标，
+                            // 不再使用原点处的单一 Mercator 比例尺缩放整个模型。
+                            projectEnuVerticesToMercator(object);
+                            // 遍历模型层级，为其中的网格统一设置材质和裁剪策略。
+                            object.traverse((child) => {
+                                if (child.isMesh) {
+                                    // 使用标准材质，使网格能够响应场景中的灯光。
+                                    // child.material = new THREE.MeshStandardMaterial({
+                                    child.material = new THREE.MeshBasicMaterial({
+
+                                        color: 0xffaa00,
+                                        // roughness: 0.8,
+                                        // metalness: 0.2,
+                                    });
+                                    // 关闭视锥裁剪，避免地图相机下模型被错误隐藏。
+                                    child.frustumCulled = false;
+                                }
+                            });
+                            // 将加载完成的模型添加到场景中。
+                            scene.add(object);
+                            // OBJ 完成加载后再应用一次精确坐标。这样即使 map 的 load
+                            // 事件先发生、当时因 objModel 尚未就绪而跳过定位，也不会遗留初始偏移。
+                            applyModelCenter();
+                            // 记录加载成功信息。
+                            console.log('OBJ model loaded successfully');
+                            // 输出当前地图与模型状态，便于调试模型定位。
+                            logMapState();
+                        },
+                        (xhr) => {
+                            // 输出加载进度，便于观察较大模型的加载过程。
+                            console.log('Loading OBJ model:', (xhr.loaded / xhr.total * 100) + '%');
+                        },
+                        (error) => {
+                            // 输出加载异常，便于定位文件路径或格式问题。
+                            console.error('Error loading OBJ model:', error);
+                        }
+                    );
+
+                    // 保存地图实例，以便 render 中请求下一帧重绘。
+                    this.map = map;
+
+                    // 复用 Mapbox 的画布和 WebGL 上下文创建 Three.js 渲染器。
+                    renderer = new THREE.WebGLRenderer({
+                        canvas: map.getCanvas(),
+                        context: gl,
+                        antialias: true,
+                    });
+
+                    // 禁止 Three.js 自动清空画布，保留 Mapbox 已绘制的地图内容。
+                    renderer.autoClear = false;
+                },
+                /** 每帧合成地图投影矩阵与模型变换矩阵，然后重绘 Three.js 场景。 */
+                render: function (gl, matrix) {
+                    // 创建绕 X 轴旋转的变换矩阵。
+                    const rotationX = new THREE.Matrix4().makeRotationAxis(
+                        new THREE.Vector3(1, 0, 0),
+                        modelRotate.x
+                    );
+                    // 创建绕 Y 轴旋转的变换矩阵。
+                    const rotationY = new THREE.Matrix4().makeRotationAxis(
+                        new THREE.Vector3(0, 1, 0),
+                        modelRotate.y
+                    );
+                    // 创建绕 Z 轴旋转的变换矩阵。
+                    const rotationZ = new THREE.Matrix4().makeRotationAxis(
+                        new THREE.Vector3(0, 0, 1),
+                        modelRotate.z
+                    );
+
+                    // 将 Mapbox 提供的投影矩阵转换为 Three.js 的 Matrix4。
+                    const m = new THREE.Matrix4().fromArray(matrix);
+                    // 顶点已是相对原点的 Mercator 坐标，因此只保留旋转与整体定位。
+                    const localRotation = new THREE.Matrix4()
+                        .multiply(rotationX)
+                        .multiply(rotationY)
+                        .multiply(rotationZ);
+                    // 组合为：地图平移 × 模型旋转。这里刻意不再包含统一缩放或 Y 轴翻转。
+                    const l = new THREE.Matrix4()
+                        .makeTranslation(
+                            modelTransform.translateX,
+                            modelTransform.translateY,
+                            modelTransform.translateZ
+                        )
+                        .multiply(localRotation);
+
+                        
+
+                    // 合并地图投影与模型局部变换，作为 Three.js 相机的投影矩阵。
+                    camera.projectionMatrix = m.multiply(l);
+                    // 重置 Three.js 的 WebGL 状态，避免与 Mapbox 的状态相互干扰。
+                    renderer.resetState();
+                    // 使用共享画布将 Three.js 场景绘制到当前地图帧中。
+                    renderer.render(scene, camera);
+                    // 请求 Mapbox 继续重绘，以支持相机移动和模型参数实时更新。
+                    this.map.triggerRepaint();
+                },
+            };
+
+            // 将定义好的自定义三维图层注册到 Mapbox 地图中。
+            map.addLayer(customLayer);
+        }
+
+        /** 创建 lil-gui 控制面板，用于实时调整底图、图层、模型位置/旋转和地形。 */
+        function addGUI() {
+            const gui = new lil.GUI();
+            gui.width = 300;
+
+            const baseMapOptions = gui.addFolder('Base Map');
+            baseMapOptions.add({ style: currentBaseMap }, 'style', Object.keys(baseMapStyles)).name('底图样式').onChange(changeBaseMap);
+            baseMapOptions.open();
+
+            const layerOptions = gui.addFolder('Layer Visibility');
+            layerOptions.add(layerVisibility, 'imageLayer').name('Image Layer').onChange(toggleImageLayer);
+            layerOptions.add(layerVisibility, 'modelVisible').name('Model').onChange(toggleModelVisible);
+            layerOptions.open();
+
+            const modelCenterOptions = gui.addFolder('Model Center');
+            modelCenterOptions.add(modelCenterParams, 'x').name('X').step(0.0001);
+            modelCenterOptions.add(modelCenterParams, 'y').name('Y').step(0.0001);
+            modelCenterOptions.add(modelCenterParams, 'z').name('Z').step(0.1);
+            modelCenterOptions.add({ apply: applyModelCenter }, 'apply').name('应用');
+            modelCenterOptions.open();
+
+            const modelMoveOptions = gui.addFolder('Model Position');
+            modelMoveOptions.add(modelMoveParams, 'step').name('步长 (m)').min(0.1).max(100).step(0.1);
+            modelMoveOptions.add(modelMoveParams, 'moveForward').name('前');
+            modelMoveOptions.add(modelMoveParams, 'moveBackward').name('后');
+            modelMoveOptions.add(modelMoveParams, 'moveUp').name('上');
+            modelMoveOptions.add(modelMoveParams, 'moveDown').name('下');
+            modelMoveOptions.add(modelMoveParams, 'moveLeft').name('左');
+            modelMoveOptions.add(modelMoveParams, 'moveRight').name('右');
+            modelMoveOptions.open();
+
+            const modelRotateOptions = gui.addFolder('Model Rotation');
+            modelRotateOptions.add(modelRotate, 'x').name('Rotate X').min(-Math.PI).max(Math.PI).step(0.01);
+            modelRotateOptions.add(modelRotate, 'y').name('Rotate Y').min(-Math.PI).max(Math.PI).step(0.01);
+            modelRotateOptions.add(modelRotate, 'z').name('Rotate Z').min(-Math.PI).max(Math.PI).step(0.01);
+            modelRotateOptions.open();
+
+            const terrainOptions = gui.addFolder('Terrain Options');
+            terrainOptions.add(terrainParams, 'enabled').name('Terrain').onChange(toggleTerrain);
+            terrainOptions.add(terrainParams, 'exaggeration').name('Exaggeration').min(0).max(5).step(0.1).onChange(updateTerrainExaggeration);
+            terrainOptions.open();
+
+            gui.open();
+        }
+
+        init();
+    </script>
+
+</body>
+
+</html>

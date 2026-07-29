@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium ENU 模型对照</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        html,
+        body,
+        #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #info {
+            position: absolute;
+            z-index: 10;
+            top: 12px;
+            left: 12px;
+            padding: 10px 12px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.72);
+            font: 13px/1.6 sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cesiumContainer"></div>
+    <div id="info">Cesium ENU 模型对照加载中...</div>
+
+    <script>
+        // 与 Mapbox demo 和 GLB 元数据完全相同的模型参考原点。
+        const modelOrigin = {
+            longitude: -95.92740622846694,
+            latitude: 41.11305358174491,
+            altitude: 0,
+        };
+
+        // OBJ/GLB 顶点的最低高程约为 261.653m；本地影像没有地形高程，
+        // 因此将模型整体下移该数值，使最低点落在原点所在的地面上。
+        const modelBaseHeight = 261.65301513671875;
+
+        // 使用与 Mapbox 相同的本地 Web Mercator 影像瓦片。
+        const imageryProvider = new Cesium.UrlTemplateImageryProvider({
+            url: './3dobj/dom/{z}/{x}/{y}.png',
+            tilingScheme: new Cesium.WebMercatorTilingScheme(),
+            maximumLevel: 19,
+            rectangle: Cesium.Rectangle.fromDegrees(
+                -95.998535156,
+                41.062786069,
+                -95.844726562,
+                41.162113939
+            ),
+        });
+
+        // 不使用 Cesium 默认底图，确保比较的是同一套本地影像。
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            // 直接把本地影像作为 Viewer 的底图，避免先创建空底图再动态替换。
+            baseLayer: new Cesium.ImageryLayer(imageryProvider),
+            // 使用显式椭球地形，避免 Viewer 在无地形 provider 时进入未初始化状态。
+            terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+            animation: false,
+            timeline: false,
+            geocoder: false,
+            homeButton: false,
+            sceneModePicker: false,
+            navigationHelpButton: false,
+            baseLayerPicker: false,
+        });
+
+        // 将模型参考原点转换为 Cesium 地固坐标。
+        const origin = Cesium.Cartesian3.fromDegrees(
+            modelOrigin.longitude,
+            modelOrigin.latitude,
+            modelOrigin.altitude
+        );
+
+        // 创建以原点为基准的东-北-天（ENU）局部坐标系。
+        // OBJ/GLB 的单位是米，因此这里不再使用 Mapbox 的 meterInMercatorCoordinateUnits。
+        const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+        // 原始 ENU 模型的局部 Z 轴是高程方向，因此沿局部 Z 轴下移模型底面高程。
+        Cesium.Matrix4.multiplyByTranslation(
+            modelMatrix,
+            new Cesium.Cartesian3(0, 0, -modelBaseHeight),
+            modelMatrix
+        );
+
+        // 标出模型原点，便于判断模型局部坐标的参考位置。
+        viewer.entities.add({
+            position: origin,
+            point: {
+                pixelSize: 8,
+                color: Cesium.Color.LIME,
+                outlineColor: Cesium.Color.BLACK,
+                outlineWidth: 1,
+            },
+        });
+
+        // 该 GLB 的顶点实际是 ENU：X=东、Y=北、Z=上。虽然 glTF 默认 Y-up，
+        // Cesium 可通过 upAxis/forwardAxis 显式声明模型真实轴向，避免自动轴转换。
+        Cesium.Model.fromGltfAsync({
+            url: './3dobj/enu/model_enu_xyz_noflip.glb',
+            modelMatrix,
+            upAxis: Cesium.Axis.Z,
+            forwardAxis: Cesium.Axis.Y,
+            show: true,
+        }).then((model) => {
+            viewer.scene.primitives.add(model);
+
+            // 以模型原点附近为初始视角，方便和 Mapbox 截图对照。
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(
+                    modelOrigin.longitude,
+                    modelOrigin.latitude,
+                    5000
+                ),
+                orientation: {
+                    heading: 0,
+                    pitch: Cesium.Math.toRadians(-90),
+                    roll: 0,
+                },
+                duration: 0,
+            });
+
+            document.getElementById('info').textContent =
+                'Cesium：同一 GLB、同一原点、同一本地影像；ENU 单位直接按米使用';
+        }).catch((error) => {
+            console.error('Cesium 模型加载失败:', error);
+            document.getElementById('info').textContent =
+                '模型加载失败，请通过 HTTP 服务访问此页面';
+        });
+    </script>
+</body>
+
+</html>
