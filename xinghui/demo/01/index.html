@@ -150,18 +150,41 @@
             const longitude = modelOrigin[0] * Math.PI / 180;
             const latitude = modelOrigin[1] * Math.PI / 180;
 
-            // 构建 ENU 三个单位轴在 ECEF 坐标中的方向向量。
-            const east = [-Math.sin(longitude), Math.cos(longitude), 0];
-            const north = [
+            // 先定义 ENU 三个局部轴在 ECEF 中的方向。
+            const eastAxis = new THREE.Vector3(
+                -Math.sin(longitude),
+                Math.cos(longitude),
+                0
+            );
+            const northAxis = new THREE.Vector3(
                 -Math.sin(latitude) * Math.cos(longitude),
                 -Math.sin(latitude) * Math.sin(longitude),
-                Math.cos(latitude),
-            ];
-            const up = [
+                Math.cos(latitude)
+            );
+            const upAxis = new THREE.Vector3(
                 Math.cos(latitude) * Math.cos(longitude),
                 Math.cos(latitude) * Math.sin(longitude),
-                Math.sin(latitude),
-            ];
+                Math.sin(latitude)
+            );
+
+            // 使用 Object3D 依次组织 ENU→ECEF 的缩放、旋转和平移：
+            // 1. ENU 坐标本身已经是米，缩放为 1；
+            // 2. 旋转使局部 X/Y/Z 对应 ECEF 中的东/北/天轴；
+            // 3. 平移到模型原点的 ECEF 位置。
+            const enuFrame = new THREE.Object3D();
+            const enuRotation = new THREE.Matrix4().makeBasis(
+                eastAxis,
+                northAxis,
+                upAxis
+            );
+            enuFrame.rotation.setFromRotationMatrix(enuRotation);
+            enuFrame.scale.set(1, 1, 1);
+            enuFrame.position.set(originEcefX, originEcefY, originEcefZ);
+            enuFrame.updateMatrix();
+
+            // Object3D.matrix 即 ENU→ECEF 齐次变换矩阵：T × R × S。
+            // 对列向量顶点而言，右侧矩阵先执行，因此实际顺序是：先 S 缩放、再 R 旋转、最后 T 平移。
+            const enuToEcef = enuFrame.matrix.clone();
 
             // 以模型原点为锚点存储相对 Mercator 坐标；渲染时再整体平移到地图位置。
             const mercatorOrigin = mapboxgl.MercatorCoordinate.fromLngLat(
@@ -169,10 +192,14 @@
                 modelAltitude
             );
 
+            
+
             object.traverse((child) => {
                 if (!child.isMesh || !child.geometry?.attributes?.position) return;
 
                 const position = child.geometry.attributes.position;
+                // 复用向量对象，避免遍历大量顶点时反复创建对象。
+                const ecefVertex = new THREE.Vector3();
 
                 // 对每个 ENU 顶点执行精确的地球坐标与投影转换。
                 for (let index = 0; index < position.count; index += 1) {
@@ -180,23 +207,15 @@
                     const northMeters = position.getY(index);
                     const upMeters = position.getZ(index);
 
-                    const ecefX = originEcefX
-                        + eastMeters * east[0]
-                        + northMeters * north[0]
-                        + upMeters * up[0];
-                    const ecefY = originEcefY
-                        + eastMeters * east[1]
-                        + northMeters * north[1]
-                        + upMeters * up[1];
-                    const ecefZ = originEcefZ
-                        + eastMeters * east[2]
-                        + northMeters * north[2]
-                        + upMeters * up[2];
+                    // 将当前 ENU 米坐标应用 ENU→ECEF 矩阵，得到地心地固坐标。
+                    ecefVertex
+                        .set(eastMeters, northMeters, upMeters)
+                        .applyMatrix4(enuToEcef);
 
                     const [vertexLon, vertexLat, vertexAltitude] = ecefToLla(
-                        ecefX,
-                        ecefY,
-                        ecefZ
+                        ecefVertex.x,
+                        ecefVertex.y,
+                        ecefVertex.z
                     );
                     const vertexMercator = mapboxgl.MercatorCoordinate.fromLngLat(
                         [vertexLon, vertexLat],
