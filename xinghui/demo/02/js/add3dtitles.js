@@ -14,7 +14,7 @@ const TILESET_ECEF_ORIGIN = new THREE.Vector3(
 );
 
 // 与 addTargetModel 的 modelCenterParams.z 一样，作为模型的附加海拔（米）。
-const TILESET_HEIGHT_OFFSET_METERS = 100;
+const TILESET_HEIGHT_OFFSET_METERS = 0;
 
 /** 将 ECEF 米坐标转换为 [经度, 纬度, 海拔]。 */
 function ecefToLla(x, y, z) {
@@ -90,32 +90,49 @@ function createTilesMercatorFrame() {
     return { mercatorFrame, ecefLocalFrame };
 }
 
-/** 根据 Mapbox zoom 选择 tileset 的几何误差阈值，数值越小 LOD 越精细。 */
-function getLodErrorTarget(zoom) {
-    if (zoom < 14) return 16;
-    if (zoom < 16) return 4.1;
-    if (zoom < 18) return 2.1;
-    return 0.02;
+// Mapbox FreeCamera 是左手相机：本地 up 为 -Y；Three 相机本地 up 为 +Y。
+const MAPBOX_CAMERA_FRAME = new THREE.Matrix4().makeScale(1, -1, 1);
+
+/**
+ * 从 Mapbox 的自由相机构造供 3d-tiles-renderer 使用的标准 Three 相机。
+ * mapboxCamera.projectionMatrix 保存 VP，因此 P = VP × cameraWorld。
+ */
+function updateTilesCamera(tilesCamera, mapboxCamera, map) {
+    const freeCamera = map.getFreeCameraOptions();
+    if (!freeCamera.position || !freeCamera.orientation) return;
+
+    // Mapbox 四元数为左手、顺时针定义，转换到 Three 时反转 xyz。
+    const rotation = new THREE.Quaternion(
+        -freeCamera.orientation.x,
+        -freeCamera.orientation.y,
+        -freeCamera.orientation.z,
+        freeCamera.orientation.w
+    );
+    tilesCamera.matrix
+        .makeRotationFromQuaternion(rotation)
+        .multiply(MAPBOX_CAMERA_FRAME)
+        .setPosition(
+            freeCamera.position.x,
+            freeCamera.position.y,
+            freeCamera.position.z
+        );
+    tilesCamera.matrixWorld.copy(tilesCamera.matrix);
+    tilesCamera.matrixWorldInverse.copy(tilesCamera.matrixWorld).invert();
+    tilesCamera.projectionMatrix
+        .copy(mapboxCamera.projectionMatrix)
+        .multiply(tilesCamera.matrixWorld);
+    tilesCamera.projectionMatrixInverse.copy(tilesCamera.projectionMatrix).invert();
 }
 
 /** 将 ECEF 3D Tiles 挂入当前 Mapbox Custom Layer 的 Three.js 场景。 */
 function add3dtitles(mapboxCamera, renderer, scene, map) {
     const tilesRenderer = new TilesRenderer(TILESET_URL);
-    tilesRenderer.setCamera(mapboxCamera);
-    tilesRenderer.setResolutionFromRenderer(mapboxCamera, renderer);
-    tilesRenderer.errorTarget = getLodErrorTarget(map.getZoom());
+    const tilesCamera = new THREE.Camera();
+    tilesCamera.matrixAutoUpdate = false;
+    tilesRenderer.setCamera(tilesCamera);
+    tilesRenderer.setResolutionFromRenderer(tilesCamera, renderer);
+    tilesRenderer.errorTarget = 16;
     tilesRenderer.displayActiveTiles = false;
-
-    // Mapbox Custom Layer 只暴露合并 VP，库无法可靠地按默认 Three 相机视锥剔除。
-    // 因此只固定“在视野内”，而 LOD 仍由上面的 zoom -> errorTarget 策略控制。
-    tilesRenderer.registerPlugin({
-        calculateTileViewError(tile, target) {
-            target.inView = true;
-            target.error = tile.geometricError;
-            target.distance = 0;
-            return true;
-        },
-    });
 
     tilesRenderer.addEventListener('load-tileset', ({ url }) => {
         console.log('3D Tiles tileset 已加载:', url);
@@ -132,12 +149,6 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
         scene.traverse(child => {
             console.log(child, "child....");
             if (!child.isMesh) return;
-
-            // if (c.material) {
-
-            //     c.material = new MeshBasicMaterial();
-
-            // }
             child.material = new THREE.MeshStandardMaterial({
                 color: 0xffaa00,
                 roughness: 0.8,
@@ -157,9 +168,10 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
     // Mapbox 驱动 renderer.render()，没有独立 requestAnimationFrame，因此每帧在这里更新瓦片。
     const previousOnBeforeRender = scene.onBeforeRender;
     scene.onBeforeRender = function (...args) {
+
         previousOnBeforeRender.apply(this, args);
-        tilesRenderer.errorTarget = getLodErrorTarget(map.getZoom());
-        tilesRenderer.setResolutionFromRenderer(mapboxCamera, renderer);
+        updateTilesCamera(tilesCamera, mapboxCamera, map);
+        tilesRenderer.setResolutionFromRenderer(tilesCamera, renderer);
         tilesRenderer.update();
     };
 
