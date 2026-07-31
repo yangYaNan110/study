@@ -1,0 +1,1389 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: "*"
+mode: rule
+log-level: info
+external-controller: "127.0.0.1:9090"
+global-client-fingerprint: chrome
+unified-delay: true
+tcp-concurrent: true
+geox-url:
+  geoip: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+dns:
+  enable: true
+  ipv6: true
+  default-nameserver:
+    [
+      "tls://223.5.5.5#skip-cert-verify=true",
+      "https://120.53.53.53/dns-query#skip-cert-verify=true",
+    ]
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  use-hosts: true
+  respect-rules: true
+  proxy-server-nameserver:
+    [
+      "https://223.5.5.5/dns-query#skip-cert-verify=true",
+      "https://doh.pub/dns-query#skip-cert-verify=true",
+      "https://dns.alidns.com/dns-query#skip-cert-verify=true",
+      "tls://223.5.5.5#skip-cert-verify=true",
+      "tls://dot.pub#skip-cert-verify=true",
+      "tls://dns.alidns.com#skip-cert-verify=true",
+    ]
+  nameserver:
+    [
+      "https://223.5.5.5/dns-query#skip-cert-verify=true",
+      "https://doh.pub/dns-query#skip-cert-verify=true",
+      "https://dns.alidns.com/dns-query#skip-cert-verify=true",
+      "tls://223.5.5.5#skip-cert-verify=true",
+      "tls://dot.pub#skip-cert-verify=true",
+      "tls://dns.alidns.com#skip-cert-verify=true",
+    ]
+  fallback: ["https://doh.pub/dns-query", 8.8.8.8]
+fallback-filter:
+  geoip: true
+  geoip-code: CN
+  ipcidr: [240.0.0.0/4, 127.0.0.1/8, 0.0.0.0/32]
+interface-name: en0
+tun:
+  enable: true
+  stack: gvisor
+  auto-route: true
+  auto-detect-interface: true
+  dns-hijack: ["any:53"]
+  inet4-route-exclude-address:
+    - 192.168.88.0/24
+fake-ip-filter:
+  - dns.msftncsi.com
+  - www.msftncsi.com
+  - www.msftconnecttest.com
+  - "+.stun.*.*"
+  - "+.stun.*.*.*"
+  - "+.stun.*.*.*.*"
+  - "+.stun.*.*.*.*.*"
+  - "*.n.n.srv.nintendo.net"
+  - +.stun.playstation.net
+  - "xbox.*.*.microsoft.com"
+  - "*.*.xboxlive.com"
+  - "*.msftncsi.com"
+  - "*.msftconnecttest.com"
+  - "*.lan"
+  - "*.localdomain"
+  - "*.example"
+  - "*.invalid"
+  - "*.localhost"
+  - "*.test"
+  - "*.local"
+  - "*.home.arpa"
+  - "time.*.com"
+  - "time.*.gov"
+  - "time.*.edu.cn"
+  - "time.*.apple.com"
+  - time-ios.apple.com
+  - "time1.*.com"
+  - "time2.*.com"
+  - "time3.*.com"
+  - "time4.*.com"
+  - "time5.*.com"
+  - "time6.*.com"
+  - "time7.*.com"
+  - "ntp.*.com"
+  - "ntp1.*.com"
+  - "ntp2.*.com"
+  - "ntp3.*.com"
+  - "ntp4.*.com"
+  - "ntp5.*.com"
+  - "ntp6.*.com"
+  - "ntp7.*.com"
+  - "*.time.edu.cn"
+  - "*.ntp.org.cn"
+  - +.pool.ntp.org
+  - time1.cloud.tencent.com
+  - music.163.com
+  - "*.music.163.com"
+  - "*.126.net"
+  - musicapi.taihe.com
+  - music.taihe.com
+  - songsearch.kugou.com
+  - trackercdn.kugou.com
+  - "*.kuwo.cn"
+  - api-jooxtt.sanook.com
+  - api.joox.com
+  - joox.com
+  - y.qq.com
+  - "*.y.qq.com"
+  - streamoc.music.tc.qq.com
+  - mobileoc.music.tc.qq.com
+  - isure.stream.qqmusic.qq.com
+  - dl.stream.qqmusic.qq.com
+  - aqqmusic.tc.qq.com
+  - amobile.music.tc.qq.com
+  - "*.xiami.com"
+  - "*.music.migu.cn"
+  - music.migu.cn
+  - +.msftconnecttest.com
+  - +.msftncsi.com
+  - localhost.ptlogin2.qq.com
+  - localhost.sec.qq.com
+  - +.qq.com
+  - +.tencent.com
+  - +.srv.nintendo.net
+  - "*.n.n.srv.nintendo.net"
+  - +.stun.playstation.net
+  - "xbox.*.*.microsoft.com"
+  - "*.*.xboxlive.com"
+  - "xbox.*.microsoft.com"
+  - xnotify.xboxlive.com
+  - +.battlenet.com.cn
+  - +.wotgame.cn
+  - +.wggames.cn
+  - +.wowsgame.cn
+  - +.wargaming.net
+  - proxy.golang.org
+  - heartbeat.belkin.com
+  - "*.linksys.com"
+  - "*.linksyssmartwifi.com"
+  - "*.router.asus.com"
+  - mesu.apple.com
+  - swscan.apple.com
+  - swquery.apple.com
+  - swdownload.apple.com
+  - swcdn.apple.com
+  - swdist.apple.com
+  - lens.l.google.com
+  - stun.l.google.com
+  - +.nflxvideo.net
+  - "*.square-enix.com"
+  - "*.finalfantasyxiv.com"
+  - "*.ffxiv.com"
+  - "*.ff14.sdo.com"
+  - ff.dorado.sdo.com
+  - "*.mcdn.bilivideo.cn"
+  - +.media.dssott.com
+  - shark007.net
+  - +.cmbchina.com
+  - +.cmbimg.com
+  - local.adguard.org
+  - +.sandai.net
+  - +.n0808.com
+proxies:
+  - {
+      name: 😀请经常同步订阅,
+      type: vless,
+      server: d-net-07.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: FzSINjzQVY1HphCnUFutU3B_i1AYjQtEaJcRBuPGMjk,
+          short-id: 6ba85179e30d4fb9,
+        },
+    }
+  - {
+      name: /台湾/01/,
+      type: vless,
+      server: d-nett-05.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: I8T5DNAKi1YxJT9N0KJOwHJSEtjAaNvfRDXPGjUIP3c,
+          short-id: 2da85179e30d4fb1,
+        },
+    }
+  - {
+      name: /台湾/02/,
+      type: vless,
+      server: d-nett-06.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: lXWRVA6ypK8AqBo1nDNyjNK5aznjNRUUbv_jVk8EDB0,
+          short-id: 2da85179e30d4fb2,
+        },
+    }
+  - {
+      name: /台湾/03/,
+      type: vless,
+      server: hirock-n-03.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: YZ8DYmLGXzOJ08Blc6qg0kDIfoxfdib_DT_jWBEOOh4,
+          short-id: 1da85179e30d4fb3,
+        },
+    }
+  - {
+      name: /台湾/04/,
+      type: vless,
+      server: hirock-n-04.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: SRhoPWr9J5vLKui0tTKtzlMOMDRZbMvIDHt75B0jP0E,
+          short-id: 1da85179e30d4fb4,
+        },
+    }
+  - {
+      name: /台湾/05/udp/,
+      server: d-u-01.k8dc517.com,
+      port: 50000,
+      ports: 50000-53000,
+      mport: 50000-53000,
+      udp: true,
+      skip-cert-verify: false,
+      sni: dog-ddns-01.foxnet.work,
+      type: hysteria2,
+      password: ad27b034-4c83-4f58-bc15-e651aee49247,
+    }
+  - {
+      name: /台湾/06/udp/,
+      server: d-u-02.k8dc517.com,
+      port: 50000,
+      ports: 50000-53000,
+      mport: 50000-53000,
+      udp: true,
+      skip-cert-verify: false,
+      sni: dog-ddns-02.foxnet.work,
+      type: hysteria2,
+      password: ad27b034-4c83-4f58-bc15-e651aee49247,
+    }
+  - {
+      name: 🇩🇪/德国/01/,
+      type: vless,
+      server: d.net-01.dax-home.com,
+      port: 20001,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: 4cRCRBJzFcFjms1LscVFl2vniBShVZLKqx53CTXg9TY,
+          short-id: 2dad5179e30d4fb2,
+        },
+    }
+  - {
+      name: 🇩🇪/德国/02/,
+      type: vless,
+      server: d.net-01.dax-home.com,
+      port: 20002,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: dPVFibj2K5aRtz6gs1h_SteyY_CxAeryKSfik2BlxHc,
+          short-id: 2dad5179e30d4fb2,
+        },
+    }
+  - {
+      name: 🇬🇧/英国/01/,
+      type: vless,
+      server: d.net-01.dax-home.com,
+      port: 20003,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: jnCbuDUCnbAXirvsuK370dnGq-tUIYP3KYIg6sT-iUs,
+          short-id: 2dad5179e30d4fb2,
+        },
+    }
+  - {
+      name: 🇬🇧/英国/02/,
+      type: vless,
+      server: d.net-01.dax-home.com,
+      port: 20004,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: azmNPAg5ZFc71v6O1YtGVCCf1Tur2HZ6WxUJxK284Dk,
+          short-id: 2dad5179e30d4fb2,
+        },
+    }
+  - {
+      name: 🇺🇸/美国/01/,
+      type: vless,
+      server: d.net-02.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-uss-01.ramnet.work,
+      network: ws,
+      ws-opts: { path: /dweb/us-01, headers: { Host: d-uss-01.ramnet.work } },
+    }
+  - {
+      name: 🇺🇸/美国/02/,
+      type: vless,
+      server: d.net-02.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-uss-02.ramnet.work,
+      network: ws,
+      ws-opts: { path: /dweb/us-02, headers: { Host: d-uss-02.ramnet.work } },
+    }
+  - {
+      name: 🇺🇸/美国/03/,
+      type: vless,
+      server: d.net-02.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-uss-03.ramnet.work,
+      network: ws,
+      ws-opts:
+        { path: /d-web/uss-03-d, headers: { Host: d-uss-03.ramnet.work } },
+    }
+  - {
+      name: 🇺🇸/美国/04/,
+      type: vless,
+      server: d.net-02.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-uss-04.ramnet.work,
+      ech-opts: { enable: true, query-server-name: cloudflare-ech.com },
+      network: ws,
+      ws-opts: { path: /dweb/uss-04, headers: { Host: d-uss-04.ramnet.work } },
+    }
+  - {
+      name: 🇺🇸/美国/05/,
+      type: vless,
+      server: d.net-03.beenet.work,
+      port: 21003,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: 59ZBAijDIIxe1Hnjzm814yoYhDz5xKi5Ae14fNq_2Bw,
+          short-id: 79e877f8,
+        },
+    }
+  - {
+      name: 🇺🇸/美国/06/,
+      type: vless,
+      server: d.net-03.beenet.work,
+      port: 21004,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: 59ZBAijDIIxe1Hnjzm814yoYhDz5xKi5Ae14fNq_2Bw,
+          short-id: 79e877f8,
+        },
+    }
+  - {
+      name: 🇺🇸/美国/07/,
+      type: vless,
+      server: d.net-03.beenet.work,
+      port: 21005,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: 59ZBAijDIIxe1Hnjzm814yoYhDz5xKi5Ae14fNq_2Bw,
+          short-id: 79e877f8,
+        },
+    }
+  - {
+      name: 🇺🇸/美国/08/,
+      type: vless,
+      server: d.net-03.beenet.work,
+      port: 21006,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: 59ZBAijDIIxe1Hnjzm814yoYhDz5xKi5Ae14fNq_2Bw,
+          short-id: 79e877f8,
+        },
+    }
+  - {
+      name: 🇺🇸/美国/09/,
+      type: vless,
+      server: d-us-09.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: ZgoUs8vAGsLYg6RJF432WrjS8wfj4hgSWbmYBnqQ_Xk,
+          short-id: d26f03d2,
+        },
+    }
+  - {
+      name: 🇺🇸/美国/10/,
+      type: vless,
+      server: d-us-10.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: 49cjCfzQB9xr2F7CDmUUiJyuSG6Xy1oiI-g-v-m9umE,
+          short-id: 12362d02,
+        },
+    }
+  - {
+      name: 🇦🇺/澳大利亚/01/,
+      type: vless,
+      server: d.net-05.dax-home.com,
+      port: 20011,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: q-hj9_ufCkZPp7a8fotPj2rcCNzokTAxBjcu5TnvxVc,
+          short-id: 315ffdae,
+        },
+    }
+  - {
+      name: 🇵🇭/菲律宾/01/,
+      type: vless,
+      server: d.net-05.dax-home.com,
+      port: 20012,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: 7nphdwH3WhakgLy7J0hofJcf9B1JifqTTFTpXLFW4Rs,
+          short-id: d45998ae,
+        },
+    }
+  - {
+      name: 🇲🇽/墨西哥/01/,
+      type: vless,
+      server: d.net-05.dax-home.com,
+      port: 20013,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: rSWtTnn1tQf9CZyPQl6DJtlnt44sEtXJE5HmDpx65B0,
+          short-id: 76c41ff5,
+        },
+    }
+  - {
+      name: 🇧🇷/巴西/02/,
+      type: vless,
+      server: d.net-05.dax-home.com,
+      port: 20014,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: gamedownloads-rockstargames-com.akamaized.net,
+      reality-opts:
+        {
+          public-key: eboFSGsF0AIfIH63jGSOup1UPGx9f5m9lRgXfSiOh0w,
+          short-id: 25042a4c,
+        },
+    }
+  - {
+      name: 🇸🇬/新加坡/,
+      type: vless,
+      server: d.net-04.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-sg-01.monkeynet.work,
+      network: ws,
+      ws-opts: { path: /dweb/sg-01, headers: { Host: d-sg-01.monkeynet.work } },
+    }
+  - {
+      name: 🇲🇾/马来西亚/,
+      type: vless,
+      server: d.net-04.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-my-01.monkeynet.work,
+      network: ws,
+      ws-opts: { path: /dweb/my-01, headers: { Host: d-my-01.monkeynet.work } },
+    }
+  - {
+      name: 🇹🇭/泰国/,
+      type: vless,
+      server: d.net-04.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-th-01.monkeynet.work,
+      network: ws,
+      ws-opts: { path: /dweb/th-01, headers: { Host: d-th-01.monkeynet.work } },
+    }
+  - {
+      name: 🇻🇳/越南/,
+      type: vless,
+      server: d.net-04.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-vn-01.monkeynet.work,
+      network: ws,
+      ws-opts: { path: /dweb/vn-01, headers: { Host: d-vn-01.monkeynet.work } },
+    }
+  - {
+      name: 🇯🇵/日本/01/,
+      type: vless,
+      server: d.net-04.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-jpp-01.ramnet.work,
+      network: ws,
+      ws-opts: { path: /dweb/jpp-01, headers: { Host: d-jpp-01.ramnet.work } },
+    }
+  - {
+      name: 🇯🇵/日本/02/,
+      type: vless,
+      server: d.net-04.dax-home.com,
+      port: 443,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: d-jpp-02.ramnet.work,
+      network: ws,
+      ws-opts: { path: /dweb/jpp-01, headers: { Host: d-jpp-02.ramnet.work } },
+    }
+  - {
+      name: 🇭🇰/香港/01/,
+      server: d-hk-01.k8dc517.com,
+      port: 50000,
+      ports: 50000-53000,
+      mport: 50000-53000,
+      udp: true,
+      skip-cert-verify: false,
+      sni: cat-ddns-01.foxnet.work,
+      type: hysteria2,
+      password: ad27b034-4c83-4f58-bc15-e651aee49247,
+    }
+  - {
+      name: 🇭🇰/香港/02/,
+      server: d-hk-02.k8dc517.com,
+      port: 50000,
+      ports: 50000-53000,
+      mport: 50000-53000,
+      udp: true,
+      skip-cert-verify: false,
+      sni: cat-ddns-02.foxnet.work,
+      type: hysteria2,
+      password: ad27b034-4c83-4f58-bc15-e651aee49247,
+    }
+  - {
+      name: 🇺🇸/美国/09/ipv6,
+      type: vless,
+      server: d-us-09-x6.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: ZgoUs8vAGsLYg6RJF432WrjS8wfj4hgSWbmYBnqQ_Xk,
+          short-id: d26f03d2,
+        },
+    }
+  - {
+      name: 🇺🇸/美国/10/ipv6,
+      type: vless,
+      server: d-us-10-x6.k8dc517.com,
+      port: 2087,
+      uuid: ad27b034-4c83-4f58-bc15-e651aee49247,
+      udp: true,
+      flow: xtls-rprx-vision,
+      tls: true,
+      skip-cert-verify: false,
+      client-fingerprint: firefox,
+      servername: osusadispatch.yuanshen.com,
+      reality-opts:
+        {
+          public-key: 49cjCfzQB9xr2F7CDmUUiJyuSG6Xy1oiI-g-v-m9umE,
+          short-id: 12362d02,
+        },
+    }
+proxy-groups:
+  - {
+      name: www.donkX.net,
+      type: select,
+      proxies:
+        [
+          自动选择,
+          故障转移,
+          😀请经常同步订阅,
+          /台湾/01/,
+          /台湾/02/,
+          /台湾/03/,
+          /台湾/04/,
+          /台湾/05/udp/,
+          /台湾/06/udp/,
+          🇩🇪/德国/01/,
+          🇩🇪/德国/02/,
+          🇬🇧/英国/01/,
+          🇬🇧/英国/02/,
+          🇺🇸/美国/01/,
+          🇺🇸/美国/02/,
+          🇺🇸/美国/03/,
+          🇺🇸/美国/04/,
+          🇺🇸/美国/05/,
+          🇺🇸/美国/06/,
+          🇺🇸/美国/07/,
+          🇺🇸/美国/08/,
+          🇺🇸/美国/09/,
+          🇺🇸/美国/10/,
+          🇦🇺/澳大利亚/01/,
+          🇵🇭/菲律宾/01/,
+          🇲🇽/墨西哥/01/,
+          🇧🇷/巴西/02/,
+          🇸🇬/新加坡/,
+          🇲🇾/马来西亚/,
+          🇹🇭/泰国/,
+          🇻🇳/越南/,
+          🇯🇵/日本/01/,
+          🇯🇵/日本/02/,
+          🇭🇰/香港/01/,
+          🇭🇰/香港/02/,
+          🇺🇸/美国/09/ipv6,
+          🇺🇸/美国/10/ipv6,
+        ],
+    }
+  - {
+      name: 自动选择,
+      type: url-test,
+      proxies:
+        [
+          😀请经常同步订阅,
+          /台湾/01/,
+          /台湾/02/,
+          /台湾/03/,
+          /台湾/04/,
+          /台湾/05/udp/,
+          /台湾/06/udp/,
+          🇩🇪/德国/01/,
+          🇩🇪/德国/02/,
+          🇬🇧/英国/01/,
+          🇬🇧/英国/02/,
+          🇺🇸/美国/01/,
+          🇺🇸/美国/02/,
+          🇺🇸/美国/03/,
+          🇺🇸/美国/04/,
+          🇺🇸/美国/05/,
+          🇺🇸/美国/06/,
+          🇺🇸/美国/07/,
+          🇺🇸/美国/08/,
+          🇺🇸/美国/09/,
+          🇺🇸/美国/10/,
+          🇦🇺/澳大利亚/01/,
+          🇵🇭/菲律宾/01/,
+          🇲🇽/墨西哥/01/,
+          🇧🇷/巴西/02/,
+          🇸🇬/新加坡/,
+          🇲🇾/马来西亚/,
+          🇹🇭/泰国/,
+          🇻🇳/越南/,
+          🇯🇵/日本/01/,
+          🇯🇵/日本/02/,
+          🇭🇰/香港/01/,
+          🇭🇰/香港/02/,
+          🇺🇸/美国/09/ipv6,
+          🇺🇸/美国/10/ipv6,
+        ],
+      url: "http://www.gstatic.com/generate_204",
+      interval: 86400,
+    }
+  - {
+      name: 故障转移,
+      type: fallback,
+      proxies:
+        [
+          😀请经常同步订阅,
+          /台湾/01/,
+          /台湾/02/,
+          /台湾/03/,
+          /台湾/04/,
+          /台湾/05/udp/,
+          /台湾/06/udp/,
+          🇩🇪/德国/01/,
+          🇩🇪/德国/02/,
+          🇬🇧/英国/01/,
+          🇬🇧/英国/02/,
+          🇺🇸/美国/01/,
+          🇺🇸/美国/02/,
+          🇺🇸/美国/03/,
+          🇺🇸/美国/04/,
+          🇺🇸/美国/05/,
+          🇺🇸/美国/06/,
+          🇺🇸/美国/07/,
+          🇺🇸/美国/08/,
+          🇺🇸/美国/09/,
+          🇺🇸/美国/10/,
+          🇦🇺/澳大利亚/01/,
+          🇵🇭/菲律宾/01/,
+          🇲🇽/墨西哥/01/,
+          🇧🇷/巴西/02/,
+          🇸🇬/新加坡/,
+          🇲🇾/马来西亚/,
+          🇹🇭/泰国/,
+          🇻🇳/越南/,
+          🇯🇵/日本/01/,
+          🇯🇵/日本/02/,
+          🇭🇰/香港/01/,
+          🇭🇰/香港/02/,
+          🇺🇸/美国/09/ipv6,
+          🇺🇸/美国/10/ipv6,
+        ],
+      url: "http://www.gstatic.com/generate_204",
+      interval: 7200,
+    }
+rules:
+  - "IP-CIDR,1.1.1.1/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,8.8.8.8/32,www.donkX.net,no-resolve"
+  - "DOMAIN-SUFFIX,services.googleapis.cn,www.donkX.net"
+  - "DOMAIN-SUFFIX,xn--ngstr-lra8j.com,www.donkX.net"
+  - "DOMAIN,safebrowsing.urlsec.qq.com,DIRECT"
+  - "DOMAIN,safebrowsing.googleapis.com,DIRECT"
+  - "DOMAIN,developer.apple.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,digicert.com,www.donkX.net"
+  - "DOMAIN,ocsp.apple.com,www.donkX.net"
+  - "DOMAIN,ocsp.comodoca.com,www.donkX.net"
+  - "DOMAIN,ocsp.usertrust.com,www.donkX.net"
+  - "DOMAIN,ocsp.sectigo.com,www.donkX.net"
+  - "DOMAIN,ocsp.verisign.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,apple-dns.net,www.donkX.net"
+  - "DOMAIN,testflight.apple.com,www.donkX.net"
+  - "DOMAIN,sandbox.itunes.apple.com,www.donkX.net"
+  - "DOMAIN,itunes.apple.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,apps.apple.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,blobstore.apple.com,www.donkX.net"
+  - "DOMAIN,cvws.icloud-content.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,mzstatic.com,DIRECT"
+  - "DOMAIN-SUFFIX,itunes.apple.com,DIRECT"
+  - "DOMAIN-SUFFIX,icloud.com,DIRECT"
+  - "DOMAIN-SUFFIX,icloud-content.com,DIRECT"
+  - "DOMAIN-SUFFIX,me.com,DIRECT"
+  - "DOMAIN-SUFFIX,aaplimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,cdn20.com,DIRECT"
+  - "DOMAIN-SUFFIX,cdn-apple.com,DIRECT"
+  - "DOMAIN-SUFFIX,akadns.net,DIRECT"
+  - "DOMAIN-SUFFIX,akamaiedge.net,DIRECT"
+  - "DOMAIN-SUFFIX,edgekey.net,DIRECT"
+  - "DOMAIN-SUFFIX,mwcloudcdn.com,DIRECT"
+  - "DOMAIN-SUFFIX,mwcname.com,DIRECT"
+  - "DOMAIN-SUFFIX,apple.com,DIRECT"
+  - "DOMAIN-SUFFIX,apple-cloudkit.com,DIRECT"
+  - "DOMAIN-SUFFIX,apple-mapkit.com,DIRECT"
+  - "DOMAIN,cn.bing.com,DIRECT"
+  - "DOMAIN-SUFFIX,126.com,DIRECT"
+  - "DOMAIN-SUFFIX,126.net,DIRECT"
+  - "DOMAIN-SUFFIX,127.net,DIRECT"
+  - "DOMAIN-SUFFIX,163.com,DIRECT"
+  - "DOMAIN-SUFFIX,360buyimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,36kr.com,DIRECT"
+  - "DOMAIN-SUFFIX,acfun.tv,DIRECT"
+  - "DOMAIN-SUFFIX,air-matters.com,DIRECT"
+  - "DOMAIN-SUFFIX,aixifan.com,DIRECT"
+  - "DOMAIN-KEYWORD,alicdn,DIRECT"
+  - "DOMAIN-KEYWORD,alipay,DIRECT"
+  - "DOMAIN-KEYWORD,taobao,DIRECT"
+  - "DOMAIN-SUFFIX,amap.com,DIRECT"
+  - "DOMAIN-SUFFIX,autonavi.com,DIRECT"
+  - "DOMAIN-KEYWORD,baidu,DIRECT"
+  - "DOMAIN-SUFFIX,bdimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,bdstatic.com,DIRECT"
+  - "DOMAIN-SUFFIX,bilibili.com,DIRECT"
+  - "DOMAIN-SUFFIX,bilivideo.com,DIRECT"
+  - "DOMAIN-SUFFIX,caiyunapp.com,DIRECT"
+  - "DOMAIN-SUFFIX,clouddn.com,DIRECT"
+  - "DOMAIN-SUFFIX,cnbeta.com,DIRECT"
+  - "DOMAIN-SUFFIX,cnbetacdn.com,DIRECT"
+  - "DOMAIN-SUFFIX,cootekservice.com,DIRECT"
+  - "DOMAIN-SUFFIX,csdn.net,DIRECT"
+  - "DOMAIN-SUFFIX,ctrip.com,DIRECT"
+  - "DOMAIN-SUFFIX,dgtle.com,DIRECT"
+  - "DOMAIN-SUFFIX,dianping.com,DIRECT"
+  - "DOMAIN-SUFFIX,douban.com,DIRECT"
+  - "DOMAIN-SUFFIX,doubanio.com,DIRECT"
+  - "DOMAIN-SUFFIX,duokan.com,DIRECT"
+  - "DOMAIN-SUFFIX,easou.com,DIRECT"
+  - "DOMAIN-SUFFIX,ele.me,DIRECT"
+  - "DOMAIN-SUFFIX,feng.com,DIRECT"
+  - "DOMAIN-SUFFIX,fir.im,DIRECT"
+  - "DOMAIN-SUFFIX,frdic.com,DIRECT"
+  - "DOMAIN-SUFFIX,g-cores.com,DIRECT"
+  - "DOMAIN-SUFFIX,godic.net,DIRECT"
+  - "DOMAIN-SUFFIX,gtimg.com,DIRECT"
+  - "DOMAIN,cdn.hockeyapp.net,DIRECT"
+  - "DOMAIN-SUFFIX,hongxiu.com,DIRECT"
+  - "DOMAIN-SUFFIX,hxcdn.net,DIRECT"
+  - "DOMAIN-SUFFIX,iciba.com,DIRECT"
+  - "DOMAIN-SUFFIX,ifeng.com,DIRECT"
+  - "DOMAIN-SUFFIX,ifengimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,ipip.net,DIRECT"
+  - "DOMAIN-SUFFIX,iqiyi.com,DIRECT"
+  - "DOMAIN-SUFFIX,jd.com,DIRECT"
+  - "DOMAIN-SUFFIX,jianshu.com,DIRECT"
+  - "DOMAIN-SUFFIX,knewone.com,DIRECT"
+  - "DOMAIN-SUFFIX,le.com,DIRECT"
+  - "DOMAIN-SUFFIX,lecloud.com,DIRECT"
+  - "DOMAIN-SUFFIX,lemicp.com,DIRECT"
+  - "DOMAIN-SUFFIX,licdn.com,DIRECT"
+  - "DOMAIN-SUFFIX,luoo.net,DIRECT"
+  - "DOMAIN-SUFFIX,meituan.com,DIRECT"
+  - "DOMAIN-SUFFIX,meituan.net,DIRECT"
+  - "DOMAIN-SUFFIX,mi.com,DIRECT"
+  - "DOMAIN-SUFFIX,miaopai.com,DIRECT"
+  - "DOMAIN-SUFFIX,microsoft.com,DIRECT"
+  - "DOMAIN-SUFFIX,microsoftonline.com,DIRECT"
+  - "DOMAIN-SUFFIX,miui.com,DIRECT"
+  - "DOMAIN-SUFFIX,miwifi.com,DIRECT"
+  - "DOMAIN-SUFFIX,mob.com,DIRECT"
+  - "DOMAIN-SUFFIX,netease.com,DIRECT"
+  - "DOMAIN-SUFFIX,office.com,DIRECT"
+  - "DOMAIN-SUFFIX,office365.com,DIRECT"
+  - "DOMAIN-KEYWORD,officecdn,DIRECT"
+  - "DOMAIN-SUFFIX,oschina.net,DIRECT"
+  - "DOMAIN-SUFFIX,ppsimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,pstatp.com,DIRECT"
+  - "DOMAIN-SUFFIX,qcloud.com,DIRECT"
+  - "DOMAIN-SUFFIX,qdaily.com,DIRECT"
+  - "DOMAIN-SUFFIX,qdmm.com,DIRECT"
+  - "DOMAIN-SUFFIX,qhimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,qhres.com,DIRECT"
+  - "DOMAIN-SUFFIX,qidian.com,DIRECT"
+  - "DOMAIN-SUFFIX,qihucdn.com,DIRECT"
+  - "DOMAIN-SUFFIX,qiniu.com,DIRECT"
+  - "DOMAIN-SUFFIX,qiniucdn.com,DIRECT"
+  - "DOMAIN-SUFFIX,qiyipic.com,DIRECT"
+  - "DOMAIN-SUFFIX,qq.com,DIRECT"
+  - "DOMAIN-SUFFIX,qqurl.com,DIRECT"
+  - "DOMAIN-SUFFIX,rarbg.to,DIRECT"
+  - "DOMAIN-SUFFIX,ruguoapp.com,DIRECT"
+  - "DOMAIN-SUFFIX,segmentfault.com,DIRECT"
+  - "DOMAIN-SUFFIX,sinaapp.com,DIRECT"
+  - "DOMAIN-SUFFIX,smzdm.com,DIRECT"
+  - "DOMAIN-SUFFIX,snapdrop.net,DIRECT"
+  - "DOMAIN-SUFFIX,sogou.com,DIRECT"
+  - "DOMAIN-SUFFIX,sogoucdn.com,DIRECT"
+  - "DOMAIN-SUFFIX,sohu.com,DIRECT"
+  - "DOMAIN-SUFFIX,soku.com,DIRECT"
+  - "DOMAIN-SUFFIX,speedtest.net,DIRECT"
+  - "DOMAIN-SUFFIX,sspai.com,DIRECT"
+  - "DOMAIN-SUFFIX,suning.com,DIRECT"
+  - "DOMAIN-SUFFIX,taobao.com,DIRECT"
+  - "DOMAIN-SUFFIX,tencent.com,DIRECT"
+  - "DOMAIN-SUFFIX,tenpay.com,DIRECT"
+  - "DOMAIN-SUFFIX,tianyancha.com,DIRECT"
+  - "DOMAIN-SUFFIX,tmall.com,DIRECT"
+  - "DOMAIN-SUFFIX,tudou.com,DIRECT"
+  - "DOMAIN-SUFFIX,umetrip.com,DIRECT"
+  - "DOMAIN-SUFFIX,upaiyun.com,DIRECT"
+  - "DOMAIN-SUFFIX,upyun.com,DIRECT"
+  - "DOMAIN-SUFFIX,veryzhun.com,DIRECT"
+  - "DOMAIN-SUFFIX,weather.com,DIRECT"
+  - "DOMAIN-SUFFIX,weibo.com,DIRECT"
+  - "DOMAIN-SUFFIX,xiami.com,DIRECT"
+  - "DOMAIN-SUFFIX,xiami.net,DIRECT"
+  - "DOMAIN-SUFFIX,xiaomicp.com,DIRECT"
+  - "DOMAIN-SUFFIX,ximalaya.com,DIRECT"
+  - "DOMAIN-SUFFIX,xmcdn.com,DIRECT"
+  - "DOMAIN-SUFFIX,xunlei.com,DIRECT"
+  - "DOMAIN-SUFFIX,yhd.com,DIRECT"
+  - "DOMAIN-SUFFIX,yihaodianimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,yinxiang.com,DIRECT"
+  - "DOMAIN-SUFFIX,ykimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,youdao.com,DIRECT"
+  - "DOMAIN-SUFFIX,youku.com,DIRECT"
+  - "DOMAIN-SUFFIX,zealer.com,DIRECT"
+  - "DOMAIN-SUFFIX,zhihu.com,DIRECT"
+  - "DOMAIN-SUFFIX,zhimg.com,DIRECT"
+  - "DOMAIN-SUFFIX,zimuzu.tv,DIRECT"
+  - "DOMAIN-SUFFIX,zoho.com,DIRECT"
+  - "DOMAIN-KEYWORD,amazon,www.donkX.net"
+  - "DOMAIN-KEYWORD,google,www.donkX.net"
+  - "DOMAIN-KEYWORD,gmail,www.donkX.net"
+  - "DOMAIN-KEYWORD,youtube,www.donkX.net"
+  - "DOMAIN-KEYWORD,facebook,www.donkX.net"
+  - "DOMAIN-SUFFIX,fb.me,www.donkX.net"
+  - "DOMAIN-SUFFIX,fbcdn.net,www.donkX.net"
+  - "DOMAIN-KEYWORD,twitter,www.donkX.net"
+  - "DOMAIN-KEYWORD,instagram,www.donkX.net"
+  - "DOMAIN-KEYWORD,dropbox,www.donkX.net"
+  - "DOMAIN-SUFFIX,twimg.com,www.donkX.net"
+  - "DOMAIN-KEYWORD,blogspot,www.donkX.net"
+  - "DOMAIN-SUFFIX,youtu.be,www.donkX.net"
+  - "DOMAIN-KEYWORD,whatsapp,www.donkX.net"
+  - "DOMAIN-KEYWORD,admarvel,REJECT"
+  - "DOMAIN-KEYWORD,admaster,REJECT"
+  - "DOMAIN-KEYWORD,adsage,REJECT"
+  - "DOMAIN-KEYWORD,adsmogo,REJECT"
+  - "DOMAIN-KEYWORD,adsrvmedia,REJECT"
+  - "DOMAIN-KEYWORD,adwords,REJECT"
+  - "DOMAIN-KEYWORD,adservice,REJECT"
+  - "DOMAIN-SUFFIX,appsflyer.com,REJECT"
+  - "DOMAIN-KEYWORD,domob,REJECT"
+  - "DOMAIN-SUFFIX,doubleclick.net,REJECT"
+  - "DOMAIN-KEYWORD,duomeng,REJECT"
+  - "DOMAIN-KEYWORD,dwtrack,REJECT"
+  - "DOMAIN-KEYWORD,guanggao,REJECT"
+  - "DOMAIN-KEYWORD,lianmeng,REJECT"
+  - "DOMAIN-SUFFIX,mmstat.com,REJECT"
+  - "DOMAIN-KEYWORD,mopub,REJECT"
+  - "DOMAIN-KEYWORD,omgmta,REJECT"
+  - "DOMAIN-KEYWORD,openx,REJECT"
+  - "DOMAIN-KEYWORD,partnerad,REJECT"
+  - "DOMAIN-KEYWORD,pingfore,REJECT"
+  - "DOMAIN-KEYWORD,supersonicads,REJECT"
+  - "DOMAIN-KEYWORD,uedas,REJECT"
+  - "DOMAIN-KEYWORD,umeng,REJECT"
+  - "DOMAIN-KEYWORD,usage,REJECT"
+  - "DOMAIN-SUFFIX,vungle.com,REJECT"
+  - "DOMAIN-KEYWORD,wlmonitor,REJECT"
+  - "DOMAIN-KEYWORD,zjtoolbar,REJECT"
+  - "DOMAIN-SUFFIX,9to5mac.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,abpchina.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,adblockplus.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,adobe.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,akamaized.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,alfredapp.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,amplitude.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ampproject.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,android.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,angularjs.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,aolcdn.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,apkpure.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,appledaily.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,appshopper.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,appspot.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,arcgis.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,archive.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,armorgames.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,aspnetcdn.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,att.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,awsstatic.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,azureedge.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,azurewebsites.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,bing.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,bintray.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,bit.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,bit.ly,www.donkX.net"
+  - "DOMAIN-SUFFIX,bitbucket.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,bjango.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,bkrtx.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,blog.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,blogcdn.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,blogger.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,blogsmithmedia.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,blogspot.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,blogspot.hk,www.donkX.net"
+  - "DOMAIN-SUFFIX,bloomberg.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,box.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,box.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,cachefly.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,chromium.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,cl.ly,www.donkX.net"
+  - "DOMAIN-SUFFIX,cloudflare.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,cloudfront.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,cloudmagic.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,cmail19.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,cnet.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,cocoapods.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,comodoca.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,crashlytics.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,culturedcode.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,d.pr,www.donkX.net"
+  - "DOMAIN-SUFFIX,danilo.to,www.donkX.net"
+  - "DOMAIN-SUFFIX,dayone.me,www.donkX.net"
+  - "DOMAIN-SUFFIX,db.tt,www.donkX.net"
+  - "DOMAIN-SUFFIX,deskconnect.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,disq.us,www.donkX.net"
+  - "DOMAIN-SUFFIX,disqus.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,disquscdn.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,dnsimple.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,docker.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,dribbble.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,droplr.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,duckduckgo.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,dueapp.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,dytt8.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,edgecastcdn.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,edgekey.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,edgesuite.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,engadget.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,entrust.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,eurekavpt.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,evernote.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,fabric.io,www.donkX.net"
+  - "DOMAIN-SUFFIX,fast.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,fastly.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,fc2.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,feedburner.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,feedly.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,feedsportal.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,fiftythree.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,firebaseio.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,flexibits.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,flickr.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,flipboard.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,g.co,www.donkX.net"
+  - "DOMAIN-SUFFIX,gabia.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,geni.us,www.donkX.net"
+  - "DOMAIN-SUFFIX,gfx.ms,www.donkX.net"
+  - "DOMAIN-SUFFIX,ggpht.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ghostnoteapp.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,git.io,www.donkX.net"
+  - "DOMAIN-KEYWORD,github,www.donkX.net"
+  - "DOMAIN-SUFFIX,globalsign.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,gmodules.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,godaddy.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,golang.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,gongm.in,www.donkX.net"
+  - "DOMAIN-SUFFIX,goo.gl,www.donkX.net"
+  - "DOMAIN-SUFFIX,goodreaders.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,goodreads.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,gravatar.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,gstatic.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,gvt0.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,hockeyapp.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,hotmail.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,icons8.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ifixit.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ift.tt,www.donkX.net"
+  - "DOMAIN-SUFFIX,ifttt.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,iherb.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,imageshack.us,www.donkX.net"
+  - "DOMAIN-SUFFIX,img.ly,www.donkX.net"
+  - "DOMAIN-SUFFIX,imgur.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,imore.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,instapaper.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ipn.li,www.donkX.net"
+  - "DOMAIN-SUFFIX,is.gd,www.donkX.net"
+  - "DOMAIN-SUFFIX,issuu.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,itgonglun.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,itun.es,www.donkX.net"
+  - "DOMAIN-SUFFIX,ixquick.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,j.mp,www.donkX.net"
+  - "DOMAIN-SUFFIX,js.revsci.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,jshint.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,jtvnw.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,justgetflux.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,kat.cr,www.donkX.net"
+  - "DOMAIN-SUFFIX,klip.me,www.donkX.net"
+  - "DOMAIN-SUFFIX,libsyn.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,linkedin.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,line-apps.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,linode.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,lithium.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,littlehj.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,live.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,live.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,livefilestore.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,llnwd.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,macid.co,www.donkX.net"
+  - "DOMAIN-SUFFIX,macromedia.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,macrumors.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,mashable.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,mathjax.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,medium.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,mega.co.nz,www.donkX.net"
+  - "DOMAIN-SUFFIX,mega.nz,www.donkX.net"
+  - "DOMAIN-SUFFIX,megaupload.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,microsofttranslator.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,mindnode.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,mobile01.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,modmyi.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,msedge.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,myfontastic.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,name.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,nextmedia.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,nsstatic.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,nssurge.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,nyt.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,nytimes.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,omnigroup.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,onedrive.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,onenote.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ooyala.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,openvpn.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,openwrt.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,orkut.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,osxdaily.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,outlook.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ow.ly,www.donkX.net"
+  - "DOMAIN-SUFFIX,paddleapi.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,parallels.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,parse.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,pdfexpert.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,periscope.tv,www.donkX.net"
+  - "DOMAIN-SUFFIX,pinboard.in,www.donkX.net"
+  - "DOMAIN-SUFFIX,pinterest.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,pixelmator.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,pixiv.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,playpcesor.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,playstation.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,playstation.com.hk,www.donkX.net"
+  - "DOMAIN-SUFFIX,playstation.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,playstationnetwork.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,pushwoosh.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,rime.im,www.donkX.net"
+  - "DOMAIN-SUFFIX,servebom.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,sfx.ms,www.donkX.net"
+  - "DOMAIN-SUFFIX,shadowsocks.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,sharethis.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,shazam.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,skype.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,smartdnswww.donkX.net.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,smartmailcloud.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,sndcdn.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,sony.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,soundcloud.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,sourceforge.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,spotify.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,squarespace.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,sstatic.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,st.luluku.pw,www.donkX.net"
+  - "DOMAIN-SUFFIX,stackoverflow.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,startpage.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,staticflickr.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,steamcommunity.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,symauth.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,symcb.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,symcd.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,tapbots.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,tapbots.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,tdesktop.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,techcrunch.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,techsmith.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,thepiratebay.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,theverge.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,time.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,timeinc.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,tiny.cc,www.donkX.net"
+  - "DOMAIN-SUFFIX,tinypic.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,tmblr.co,www.donkX.net"
+  - "DOMAIN-SUFFIX,todoist.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,trello.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,trustasiassl.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,tumblr.co,www.donkX.net"
+  - "DOMAIN-SUFFIX,tumblr.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,tweetdeck.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,tweetmarker.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,twitch.tv,www.donkX.net"
+  - "DOMAIN-SUFFIX,txmblr.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,typekit.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,ubertags.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ublock.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,ubnt.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ulyssesapp.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,urchin.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,usertrust.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,v.gd,www.donkX.net"
+  - "DOMAIN-SUFFIX,v2ex.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,vimeo.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,vimeocdn.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,vine.co,www.donkX.net"
+  - "DOMAIN-SUFFIX,vivaldi.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,vox-cdn.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,vsco.co,www.donkX.net"
+  - "DOMAIN-SUFFIX,vultr.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,w.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,w3schools.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,webtype.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,wikiwand.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,wikileaks.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,wikimedia.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,wikipedia.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,wikipedia.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,windows.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,windows.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,wire.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,wordpress.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,workflowy.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,wp.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,wsj.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,wsj.net,www.donkX.net"
+  - "DOMAIN-SUFFIX,xda-developers.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,xeeno.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,xiti.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,yahoo.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,yimg.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,ying.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,yoyo.org,www.donkX.net"
+  - "DOMAIN-SUFFIX,ytimg.com,www.donkX.net"
+  - "DOMAIN-SUFFIX,telegra.ph,www.donkX.net"
+  - "DOMAIN-SUFFIX,telegram.org,www.donkX.net"
+  - "IP-CIDR,91.108.4.0/22,www.donkX.net,no-resolve"
+  - "IP-CIDR,91.108.8.0/21,www.donkX.net,no-resolve"
+  - "IP-CIDR,91.108.16.0/22,www.donkX.net,no-resolve"
+  - "IP-CIDR,91.108.56.0/22,www.donkX.net,no-resolve"
+  - "IP-CIDR,149.154.160.0/20,www.donkX.net,no-resolve"
+  - "IP-CIDR6,2001:67c:4e8::/48,www.donkX.net,no-resolve"
+  - "IP-CIDR6,2001:b28:f23d::/48,www.donkX.net,no-resolve"
+  - "IP-CIDR6,2001:b28:f23f::/48,www.donkX.net,no-resolve"
+  - "IP-CIDR,120.232.181.162/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,120.241.147.226/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,120.253.253.226/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,120.253.255.162/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,120.253.255.34/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,120.253.255.98/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,180.163.150.162/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,180.163.150.34/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,180.163.151.162/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,180.163.151.34/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,203.208.39.0/24,www.donkX.net,no-resolve"
+  - "IP-CIDR,203.208.40.0/24,www.donkX.net,no-resolve"
+  - "IP-CIDR,203.208.41.0/24,www.donkX.net,no-resolve"
+  - "IP-CIDR,203.208.43.0/24,www.donkX.net,no-resolve"
+  - "IP-CIDR,203.208.50.0/24,www.donkX.net,no-resolve"
+  - "IP-CIDR,220.181.174.162/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,220.181.174.226/32,www.donkX.net,no-resolve"
+  - "IP-CIDR,220.181.174.34/32,www.donkX.net,no-resolve"
+  - "DOMAIN,injections.adguard.org,DIRECT"
+  - "DOMAIN,local.adguard.org,DIRECT"
+  - "DOMAIN-SUFFIX,local,DIRECT"
+  - "IP-CIDR,127.0.0.0/8,DIRECT"
+  - "IP-CIDR,172.16.0.0/12,DIRECT"
+  - "IP-CIDR,192.168.0.0/16,DIRECT"
+  - "IP-CIDR,10.0.0.0/8,DIRECT"
+  - "IP-CIDR,17.0.0.0/8,DIRECT"
+  - "IP-CIDR,100.64.0.0/10,DIRECT"
+  - "IP-CIDR,224.0.0.0/4,DIRECT"
+  - "IP-CIDR6,fe80::/10,DIRECT"
+  - "DOMAIN-SUFFIX,cn,DIRECT"
+  - "DOMAIN-KEYWORD,-cn,DIRECT"
+  - "GEOIP,CN,DIRECT"
+  - "MATCH,www.donkX.net"
