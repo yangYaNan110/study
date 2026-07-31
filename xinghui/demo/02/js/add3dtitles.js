@@ -13,7 +13,7 @@ const TILESET_ECEF_ORIGIN = new THREE.Vector3(
     4172609.178808594
 );
 
-// 调试用：将整套瓦片沿本地 up 轴抬高，便于排除被地形遮挡的情况。
+// 与 addTargetModel 的 modelCenterParams.z 一样，作为模型的附加海拔（米）。
 const TILESET_HEIGHT_OFFSET_METERS = 100;
 
 /** 将 ECEF 米坐标转换为 [经度, 纬度, 海拔]。 */
@@ -47,7 +47,8 @@ function createTilesMercatorFrame() {
     );
     const mercatorOrigin = mapboxgl.MercatorCoordinate.fromLngLat(
         [longitude, latitude],
-        altitude
+        // 与 addTargetModel 相同：高度在 fromLngLat 时传入，而不是事后直接改 Mercator z。
+        altitude + TILESET_HEIGHT_OFFSET_METERS
     );
     const longitudeRad = longitude * Math.PI / 180;
     const latitudeRad = latitude * Math.PI / 180;
@@ -78,7 +79,7 @@ function createTilesMercatorFrame() {
         .setPosition(
             mercatorOrigin.x,
             mercatorOrigin.y,
-            mercatorOrigin.z + TILESET_HEIGHT_OFFSET_METERS * scale
+            mercatorOrigin.z
         );
 
     const ecefLocalFrame = new THREE.Object3D();
@@ -89,18 +90,24 @@ function createTilesMercatorFrame() {
     return { mercatorFrame, ecefLocalFrame };
 }
 
+/** 根据 Mapbox zoom 选择 tileset 的几何误差阈值，数值越小 LOD 越精细。 */
+function getLodErrorTarget(zoom) {
+    if (zoom < 14) return 16;
+    if (zoom < 16) return 4.1;
+    if (zoom < 18) return 2.1;
+    return 0.02;
+}
+
 /** 将 ECEF 3D Tiles 挂入当前 Mapbox Custom Layer 的 Three.js 场景。 */
-function add3dtitles(camera, renderer, scene) {
+function add3dtitles(mapboxCamera, renderer, scene, map) {
     const tilesRenderer = new TilesRenderer(TILESET_URL);
-    tilesRenderer.setCamera(camera);
-    tilesRenderer.setResolutionFromRenderer(camera, renderer);
-    // 采用库默认的 LOD 误差阈值：误差不高于 16 时停止细分。
-    tilesRenderer.errorTarget = 16;
+    tilesRenderer.setCamera(mapboxCamera);
+    tilesRenderer.setResolutionFromRenderer(mapboxCamera, renderer);
+    tilesRenderer.errorTarget = getLodErrorTarget(map.getZoom());
     tilesRenderer.displayActiveTiles = false;
 
-    // 3d-tiles-renderer 默认从 PerspectiveCamera 的 P、V 分离矩阵计算视锥。
-    // Mapbox Custom Layer 只有合并 VP，导致该判断把所有瓦片判为视锥外。
-    // 这里仅补齐“在视锥内”的判断；具体细分层级仍由 geometricError / errorTarget 决定。
+    // Mapbox Custom Layer 只暴露合并 VP，库无法可靠地按默认 Three 相机视锥剔除。
+    // 因此只固定“在视野内”，而 LOD 仍由上面的 zoom -> errorTarget 策略控制。
     tilesRenderer.registerPlugin({
         calculateTileViewError(tile, target) {
             target.inView = true;
@@ -119,6 +126,28 @@ function add3dtitles(camera, renderer, scene) {
     tilesRenderer.addEventListener('load-error', ({ url, error }) => {
         console.error('3D Tiles 加载失败:', url, error);
     });
+    tilesRenderer.addEventListener('load-model', ({ scene }) => {
+
+        // create a custom material for the tile
+        scene.traverse(child => {
+            console.log(child, "child....");
+            if (!child.isMesh) return;
+
+            // if (c.material) {
+
+            //     c.material = new MeshBasicMaterial();
+
+            // }
+            child.material = new THREE.MeshStandardMaterial({
+                color: 0xffaa00,
+                roughness: 0.8,
+                metalness: 0.2,
+            });
+            child.frustumCulled = false;
+
+        });
+    });
+
 
     // 与 addTargetModel 的 modelFrame 一样，父级负责地图坐标变换，瓦片保持自身坐标。
     const { mercatorFrame, ecefLocalFrame } = createTilesMercatorFrame();
@@ -129,7 +158,8 @@ function add3dtitles(camera, renderer, scene) {
     const previousOnBeforeRender = scene.onBeforeRender;
     scene.onBeforeRender = function (...args) {
         previousOnBeforeRender.apply(this, args);
-        tilesRenderer.setResolutionFromRenderer(camera, renderer);
+        tilesRenderer.errorTarget = getLodErrorTarget(map.getZoom());
+        tilesRenderer.setResolutionFromRenderer(mapboxCamera, renderer);
         tilesRenderer.update();
     };
 
