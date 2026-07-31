@@ -25,8 +25,8 @@
     <script type="importmap">
 {
     "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
     }
 }
 </script>
@@ -39,7 +39,8 @@
         import * as THREE from 'three';
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
-        import { MAPBOX_TOKEN } from './token.js';
+        import { MAPBOX_TOKEN } from '../01/token.js';
+        import add3dtitles from './js/add3dtitles.js';
 
         const baseMapStyles = {
             '卫星影像': 'mapbox://styles/mapbox/satellite-v9',
@@ -79,7 +80,7 @@
 
         const imageSourceId = 'image-source';
         const imageLayerId = 'image-layer';
-        const imageUrl = './3dobj/dom/{z}/{x}/{y}.png';
+        const imageUrl = '../01/3dobj/dom/{z}/{x}/{y}.png';
 
         // 从模型元数据读取的精确原点；与控制面板的初始经纬度保持同一来源。
         const modelOrigin = [modelCenterParams.x, modelCenterParams.y];
@@ -464,7 +465,7 @@
 
             const loader = new OBJLoader();
             loader.load(
-                "./落汤鸡/目标三维模型-精模/目标1三维模型-精模.obj",
+                "../01/落汤鸡/目标三维模型-精模/目标1三维模型-精模.obj",
                 (object) => {
                     console.log('object', object);
                     objModel = object;
@@ -535,6 +536,7 @@
 
                     // 后续新增 OBJ 时，只需继续调用类似 addTargetModel 的独立函数。
                     addTargetModel();
+                    add3dtitles();  
 
                     // 保存地图实例，以便 render 中请求下一帧重绘。
                     this.map = map;

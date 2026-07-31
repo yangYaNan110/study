@@ -1,0 +1,15 @@
+{
+  "name": "three-3dtitles",
+  "version": "1.0.0",
+  "description": "- [3DTilesRendererJS 用户手册](https://github.com/NASA-AMMOS/3DTilesRendererJS/blob/master/USAGE.md)",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "3d-tiles-renderer": "^0.5.0"
+  }
+}
