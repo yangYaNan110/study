@@ -263,7 +263,7 @@
                     exaggeration: terrainParams.exaggeration,
                 },
             };
-            console.log('=== 地图状态 ===', mapState);
+            // console.log('=== 地图状态 ===', mapState);
         }
 
         /** 创建 Mapbox 地图，并在样式加载后挂载影像、地形、Three.js 模型和控制面板。 */
@@ -514,7 +514,15 @@
                     camera = new THREE.Camera();
                     // 创建承载灯光和 OBJ 模型的 Three.js 场景。
                     scene = new THREE.Scene();
+                    // 复用 Mapbox 的画布和 WebGL 上下文创建 Three.js 渲染器。
+                    renderer = new THREE.WebGLRenderer({
+                        canvas: map.getCanvas(),
+                        context: gl,
+                        antialias: true,
+                    });
 
+                    // 禁止 Three.js 自动清空画布，保留 Mapbox 已绘制的地图内容。
+                    renderer.autoClear = false;
                     // 添加第一盏平行光，为模型提供一个方向上的主光照。
                     const directionalLight = new THREE.DirectionalLight(0xffffff);
                     // 设置光源位置并归一化方向向量。
@@ -535,21 +543,14 @@
                     scene.add(ambientLight);
 
                     // 后续新增 OBJ 时，只需继续调用类似 addTargetModel 的独立函数。
-                    addTargetModel();
-                    add3dtitles();  
+                    // addTargetModel();
+                    add3dtitles(camera,renderer, scene);  
 
                     // 保存地图实例，以便 render 中请求下一帧重绘。
                     this.map = map;
 
-                    // 复用 Mapbox 的画布和 WebGL 上下文创建 Three.js 渲染器。
-                    renderer = new THREE.WebGLRenderer({
-                        canvas: map.getCanvas(),
-                        context: gl,
-                        antialias: true,
-                    });
+                    
 
-                    // 禁止 Three.js 自动清空画布，保留 Mapbox 已绘制的地图内容。
-                    renderer.autoClear = false;
                 },
                 /** 每帧同步 Mapbox 的视图投影矩阵，然后重绘 Three.js 场景。 */
                 render: function (gl, matrix) {
