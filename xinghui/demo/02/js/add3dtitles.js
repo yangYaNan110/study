@@ -269,18 +269,11 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
     // Mapbox 驱动 renderer.render()，没有独立 requestAnimationFrame，因此每帧在这里更新瓦片。
     const previousOnBeforeRender = scene.onBeforeRender;
     scene.onBeforeRender = function (...args) {
-
-        previousOnBeforeRender.apply(this, args);
         updateTilesCamera(tilesCamera, mapboxCamera, map);
         tilesRenderer.setResolutionFromRenderer(tilesCamera, renderer);
         tilesRenderer.errorTarget = getErrorTargetFromMapZoom(map.getZoom());
         tilesRenderer.update();
-        tilesRenderer.forEachLoadedModel(loadedScene => {
-            if (loadedScene.parent !== tilesRenderer.group) {
-                tilesRenderer.group.add(loadedScene);
-            }
-            loadedScene.visible = true;
-        });
+
     };
 
     console.log('开始加载 3D Tiles:', TILESET_URL);
