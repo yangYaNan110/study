@@ -14,7 +14,7 @@ const TILESET_ECEF_ORIGIN = new THREE.Vector3(
 );
 
 // 与 addTargetModel 的 modelCenterParams.z 一样，作为模型的附加海拔（米）。
-const TILESET_HEIGHT_OFFSET_METERS = 40;
+const TILESET_HEIGHT_OFFSET_METERS = 30;
 
 /** 将 ECEF 米坐标转换为 [经度, 纬度, 海拔]。 */
 function ecefToLla(x, y, z) {
@@ -35,7 +35,13 @@ function ecefToLla(x, y, z) {
     return [longitude * 180 / Math.PI, latitude * 180 / Math.PI, altitude];
 }
 
-/** 创建 Mercator 局部坐标的根节点；子模型的顶点会在加载时转换到这个局部坐标系。 */
+/**
+ * 创建 tileset 的 Mercator 原点和根平移矩阵；子模型顶点会转换为相对此原点的局部坐标。
+ *
+ * 注意：不能把平移挂在 Object3D 上。若顶点着色器先做 Model × vertex，再做 VP × world，
+ * 30m 量级的高差会在 Mercator 世界坐标的 float32 加法中损失精度。改为每帧在 CPU 上合成
+ * VP × Model，再作为唯一投影矩阵上传。
+ */
 function createTilesMercatorFrame() {
     const [longitude, latitude, altitude] = ecefToLla(
         TILESET_ECEF_ORIGIN.x,
@@ -53,51 +59,80 @@ function createTilesMercatorFrame() {
         [longitude, latitude],
         altitude + TILESET_HEIGHT_OFFSET_METERS
     );
-    const mercatorFrame = new THREE.Object3D();
-    mercatorFrame.name = 'tiles-mercator-frame';
-    // 顶点已经是以此处为原点的 Mercator 坐标；父级只承担线性的整体平移。
-    mercatorFrame.position.set(
+    const modelMatrix = new THREE.Matrix4().makeTranslation(
         mercatorFrameOrigin.x,
         mercatorFrameOrigin.y,
         mercatorFrameOrigin.z
     );
 
-    return { mercatorFrame, mercatorVertexOrigin };
+    return { modelMatrix, mercatorVertexOrigin };
 }
 
 // Mapbox FreeCamera 是左手相机：本地 up 为 -Y；Three 相机本地 up 为 +Y。
 const MAPBOX_CAMERA_FRAME = new THREE.Matrix4().makeScale(1, -1, 1);
+// 当前 Three 场景中的模型顶点直接使用 Mapbox Mercator 世界坐标，故 W 为单位矩阵。
+const MAPBOX_WORLD_TO_THREE_WORLD = new THREE.Matrix4().identity();
 const _cameraPositionInTiles = new THREE.Vector3();
 const _clipPoint = new THREE.Vector4();
 
 /**
- * 从 Mapbox 的自由相机构造供 3d-tiles-renderer 使用的标准 Three 相机。
- * mapboxCamera.projectionMatrix 保存 VP，因此 P = VP × cameraWorld。
+ * 将 Mapbox 的自由相机同步为供 3d-tiles-renderer 使用的 Three 相机。
+ *
+ * 使用列向量，最终相机世界矩阵为：
+ * Mthree = W × Mmapbox × C
+ *
+ * C：Three 相机局部坐标 -> Mapbox 相机局部坐标。
+ * Mmapbox：Mapbox 相机局部坐标 -> Mapbox Mercator 世界坐标。
+ * W：Mapbox Mercator 世界坐标 -> Three 世界坐标。
  */
 function updateTilesCamera(tilesCamera, mapboxCamera, map) {
+    // 这是相机的位姿数据：position 为 Mercator 世界位置，orientation 为相机朝向。
+    // 它不是视图矩阵 V，也不是视图投影矩阵 VP。
     const freeCamera = map.getFreeCameraOptions();
+    // 位姿不完整时保留上一帧相机矩阵。
     if (!freeCamera.position || !freeCamera.orientation) return;
 
-    // Mapbox 四元数为左手、顺时针定义，转换到 Three 时反转 xyz。
+    // 将 Mapbox orientation 转为本项目中构造 Three 相机矩阵所使用的四元数。
+    // 单位四元数的逆为 (-x, -y, -z, w)，因此这里反转虚部 xyz。
     const rotation = new THREE.Quaternion(
         -freeCamera.orientation.x,
         -freeCamera.orientation.y,
         -freeCamera.orientation.z,
         freeCamera.orientation.w
     );
-    tilesCamera.matrix
+
+    // C：仅转换相机“局部”基础轴；它不改变相机在世界中的 position。
+    const threeCameraLocalToMapboxCameraLocal = MAPBOX_CAMERA_FRAME;
+
+    // Mmapbox = T × R：由 Mapbox position 和 orientation 构造相机世界矩阵。
+    const mapboxCameraWorldMatrix = new THREE.Matrix4()
         .makeRotationFromQuaternion(rotation)
-        .multiply(MAPBOX_CAMERA_FRAME)
         .setPosition(
             freeCamera.position.x,
             freeCamera.position.y,
             freeCamera.position.z
         );
+
+    // W：Mapbox 世界坐标转换到 Three 世界坐标。当前项目为 identity，
+    // 因为场景顶点和 Mapbox VP 都直接采用 Mercator 世界坐标。
+    const mapboxWorldToThreeWorld = MAPBOX_WORLD_TO_THREE_WORLD;
+    // Mthree = W × Mmapbox × C。对 Three 相机局部点的实际作用顺序是 C -> Mmapbox -> W。
+    const threeCameraWorldMatrix = new THREE.Matrix4()
+        .multiplyMatrices(mapboxWorldToThreeWorld, mapboxCameraWorldMatrix)
+        .multiply(threeCameraLocalToMapboxCameraLocal);
+
+    // matrixAutoUpdate 为 false，手动写入相机的 world matrix 及其逆（视图矩阵 V）。
+    tilesCamera.matrix.copy(threeCameraWorldMatrix);
     tilesCamera.matrixWorld.copy(tilesCamera.matrix);
     tilesCamera.matrixWorldInverse.copy(tilesCamera.matrixWorld).invert();
+
+    // Custom Layer 传入的 projectionMatrix 是 VP。VP × cameraWorld = P，
+    // 因此右乘 Mthree 可以还原 3d-tiles-renderer 所需的投影矩阵 P。
     tilesCamera.projectionMatrix
         .copy(mapboxCamera.projectionMatrix)
         .multiply(tilesCamera.matrixWorld);
+
+    // P 的逆矩阵供 Three / 3d-tiles-renderer 进行反投影等计算。
     tilesCamera.projectionMatrixInverse.copy(tilesCamera.projectionMatrix).invert();
 }
 
@@ -153,10 +188,10 @@ function getErrorTargetFromMapZoom(zoom) {
 /** 将 ECEF 3D Tiles 挂入当前 Mapbox Custom Layer 的 Three.js 场景。 */
 function add3dtitles(mapboxCamera, renderer, scene, map) {
     const tilesRenderer = new TilesRenderer(TILESET_URL);
-    const { mercatorFrame, mercatorVertexOrigin } = createTilesMercatorFrame();
-    // 每个已加载模型的顶点都会转为相对此原点的 Mercator 坐标；父级只做整体平移。
-    mercatorFrame.add(tilesRenderer.group);
-    scene.add(mercatorFrame);
+    const { modelMatrix, mercatorVertexOrigin } = createTilesMercatorFrame();
+    // 每个已加载模型的顶点都是相对此原点的 Mercator 坐标。group 保持单位变换，
+    // 全局定位会在 render 前合入 Mapbox VP，避免在 GPU 中先相加世界 Mercator 坐标。
+    scene.add(tilesRenderer.group);
     const tilesCamera = new THREE.Camera();
     tilesCamera.matrixAutoUpdate = false;
     tilesRenderer.setCamera(tilesCamera);
@@ -170,9 +205,12 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
     tilesRenderer.registerPlugin({
         calculateTileViewError(tile, target) {
             // 顶点已在 Mercator 坐标，而 3d-tiles-renderer 的包围盒仍是 ECEF。
-            // 因此把 Mapbox 相机位置反算为 ECEF 后计算真实距离。
+            // 直接读取 Mapbox 的原始 Mercator 相机位置再反算 ECEF，避免依赖
+            // Three 相机矩阵在渲染器更新过程中的中间状态。
+            const freeCamera = map.getFreeCameraOptions();
+            if (!freeCamera.position) return false;
             mercatorToEcef(
-                _cameraPositionInTiles.setFromMatrixPosition(tilesCamera.matrixWorld)
+                _cameraPositionInTiles.copy(freeCamera.position)
             );
 
             // 包围盒和相机现在均为 ECEF 米坐标，可以计算真实最近距离。
@@ -241,15 +279,21 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
             geometry.computeBoundingSphere();
             child.geometry = geometry;
 
-            child.material = new THREE.MeshStandardMaterial({
+            // child.material = new THREE.MeshStandardMaterial({
+            child.material = new THREE.MeshBasicMaterial({
+
                 color: 0xffaa00,
                 roughness: 0.8,
                 metalness: 0.2,
                 // 保留地形深度遮挡；将模型深度值轻微拉向相机，避免近乎共面时 z-fighting。
                 // 负值表示更靠近相机，数值可在 -1 到 -4 间按效果微调。
-                // polygonOffset: true,
-                // polygonOffsetFactor: -1,
-                // polygonOffsetUnits: -1,
+                polygonOffset: true,
+                polygonOffsetFactor: -2,
+                // transparent: true,
+                // depthTest: false,
+                // depthWrite: false,
+
+                polygonOffsetUnits: -1,
             });
             child.frustumCulled = false;
         });
@@ -269,10 +313,15 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
     // Mapbox 驱动 renderer.render()，没有独立 requestAnimationFrame，因此每帧在这里更新瓦片。
     const previousOnBeforeRender = scene.onBeforeRender;
     scene.onBeforeRender = function (...args) {
+        previousOnBeforeRender?.apply(this, args);
         updateTilesCamera(tilesCamera, mapboxCamera, map);
         tilesRenderer.setResolutionFromRenderer(tilesCamera, renderer);
         tilesRenderer.errorTarget = getErrorTargetFromMapZoom(map.getZoom());
         tilesRenderer.update();
+
+        // Mapbox Custom Layer 在 render 开头写入 VP。这里在 CPU（JS Number，双精度）中
+        // 合成 VP × Model；顶点着色器随后只做一次矩阵乘法，与 ECEF OBJ demo 的路径一致。
+        mapboxCamera.projectionMatrix.multiply(modelMatrix);
 
     };
 
