@@ -64,7 +64,7 @@
         const modelCenterParams = {
             x: -95.92740622846694,
             y: 41.11305358174491,
-            z: 36,
+            z: 0,
         };
 
         const modelMoveParams = {
@@ -266,20 +266,33 @@
             }
         }
 
-        /** 注册 Mapbox DEM 高程数据源，并根据开关启用或关闭三维地形。 */
+        /** 注册与测绘模型同批次产出的本地 DEM，并根据开关启用或关闭三维地形。 */
         function addTerrain() {
-            if (!map.getSource('mapbox-dem')) {
-                map.addSource('mapbox-dem', {
+            //study/xinghui/demo/01/落汤鸡/单目标DEM/dem_wgs84/10/238/383.png
+            if (!map.getSource('local-model-dem')) {
+                console.log('addTerrain:::yyn...');
+                map.addSource('local-model-dem', {
+
                     type: 'raster-dem',
-                    url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                    // dem_wgs84.tif 已切为 Mapbox Terrain-RGB 瓦片；RGB 可还原为米单位高程。
+                    // 它与 OBJ、DOM 是同一测绘成果，避免使用 Mapbox 全球 DEM 带来的局部起伏差异。
+                    // study/xinghui/demo/01
+                    // study/xinghui/demo/01/3dobj/tiles/13/1911/3066.png
+                    // raster-dem 在 Mapbox Worker 中加载，需使用绝对 URL。
+                    // 仅转换目录前缀；若将 {z}/{x}/{y} 直接传给 URL()，会被编码为 %7Bz%7D。
+                    tiles: [
+                        `${new URL('./3dobj/tiles/', window.location.href).href}{z}/{x}/{y}.png`,
+                    ],
                     tileSize: 512,
-                    maxzoom: 14,
+                    encoding: 'mapbox',
+                    minzoom: 0,
+                    maxzoom: 15,
                 });
             }
 
             if (terrainParams.enabled) {
                 map.setTerrain({
-                    source: 'mapbox-dem',
+                    source: 'local-model-dem',
                     exaggeration: terrainParams.exaggeration,
                 });
             } else {
@@ -291,7 +304,7 @@
         function updateTerrainExaggeration(value) {
             if (terrainParams.enabled) {
                 map.setTerrain({
-                    source: 'mapbox-dem',
+                    source: 'local-model-dem',
                     exaggeration: value,
                 });
             }
@@ -301,7 +314,7 @@
         function toggleTerrain(enabled) {
             if (enabled) {
                 map.setTerrain({
-                    source: 'mapbox-dem',
+                    source: 'local-model-dem',
                     exaggeration: terrainParams.exaggeration,
                 });
             } else {
@@ -472,6 +485,10 @@
                                         color: 0xffaa00,
                                         roughness: 0.8,
                                         metalness: 0.2,
+                                        // polygonOffset: true,
+                                        // polygonOffsetFactor: -2,
+                                        // polygonOffsetUnits: -1,
+                                        depthTest: false,
                                     });
                                     // 关闭视锥裁剪，避免地图相机下模型被错误隐藏。
                                     child.frustumCulled = false;
