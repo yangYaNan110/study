@@ -473,7 +473,10 @@
                     object.traverse((child) => {
                         if (!child.isMesh) return;
 
-                        child.material = new THREE.MeshStandardMaterial({
+                        // child.material = new THREE.MeshStandardMaterial({
+                            // 
+                        child.material = new THREE.MeshBasicMaterial({
+
                             color: 0xffaa00,
                             roughness: 0.8,
                             metalness: 0.2,

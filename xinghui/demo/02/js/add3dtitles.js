@@ -14,7 +14,7 @@ const TILESET_ECEF_ORIGIN = new THREE.Vector3(
 );
 
 // 与 addTargetModel 的 modelCenterParams.z 一样，作为模型的附加海拔（米）。
-const TILESET_HEIGHT_OFFSET_METERS = 30;
+const TILESET_HEIGHT_OFFSET_METERS = 36;
 
 /** 将 ECEF 米坐标转换为 [经度, 纬度, 海拔]。 */
 function ecefToLla(x, y, z) {
@@ -279,21 +279,21 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
             geometry.computeBoundingSphere();
             child.geometry = geometry;
 
-            // child.material = new THREE.MeshStandardMaterial({
-            child.material = new THREE.MeshBasicMaterial({
+            child.material = new THREE.MeshStandardMaterial({
+                // child.material = new THREE.MeshBasicMaterial({
 
                 color: 0xffaa00,
                 roughness: 0.8,
-                metalness: 0.2,
+                metalness: 0.1,
                 // 保留地形深度遮挡；将模型深度值轻微拉向相机，避免近乎共面时 z-fighting。
                 // 负值表示更靠近相机，数值可在 -1 到 -4 间按效果微调。
-                polygonOffset: true,
-                polygonOffsetFactor: -2,
+                // polygonOffset: true,
+                // polygonOffsetFactor: -2,
                 // transparent: true,
                 // depthTest: false,
                 // depthWrite: false,
 
-                polygonOffsetUnits: -1,
+                // polygonOffsetUnits: -1,
             });
             child.frustumCulled = false;
         });
