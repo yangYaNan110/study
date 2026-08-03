@@ -14,7 +14,7 @@ const TILESET_ECEF_ORIGIN = new THREE.Vector3(
 );
 
 // 与 addTargetModel 的 modelCenterParams.z 一样，作为模型的附加海拔（米）。
-const TILESET_HEIGHT_OFFSET_METERS = 150;
+const TILESET_HEIGHT_OFFSET_METERS = 40;
 
 /** 将 ECEF 米坐标转换为 [经度, 纬度, 海拔]。 */
 function ecefToLla(x, y, z) {
@@ -42,17 +42,27 @@ function createTilesMercatorFrame() {
         TILESET_ECEF_ORIGIN.y,
         TILESET_ECEF_ORIGIN.z
     );
-    const mercatorOrigin = mapboxgl.MercatorCoordinate.fromLngLat(
+    console.log("高程::", altitude);
+    // 顶点以模型原始高度为参考；不能在这里加入额外偏移，否则会与父级平移相互抵消。
+    const mercatorVertexOrigin = mapboxgl.MercatorCoordinate.fromLngLat(
         [longitude, latitude],
-        // 与 addTargetModel 相同：高度在 fromLngLat 时传入，而不是事后直接改 Mercator z。
+        altitude
+    );
+    // 只有父级定位应用额外高程，最终 modelMatrix 才会让整套模型上/下移动。
+    const mercatorFrameOrigin = mapboxgl.MercatorCoordinate.fromLngLat(
+        [longitude, latitude],
         altitude + TILESET_HEIGHT_OFFSET_METERS
     );
     const mercatorFrame = new THREE.Object3D();
     mercatorFrame.name = 'tiles-mercator-frame';
     // 顶点已经是以此处为原点的 Mercator 坐标；父级只承担线性的整体平移。
-    mercatorFrame.position.set(mercatorOrigin.x, mercatorOrigin.y, mercatorOrigin.z);
+    mercatorFrame.position.set(
+        mercatorFrameOrigin.x,
+        mercatorFrameOrigin.y,
+        mercatorFrameOrigin.z
+    );
 
-    return { mercatorFrame, mercatorOrigin };
+    return { mercatorFrame, mercatorVertexOrigin };
 }
 
 // Mapbox FreeCamera 是左手相机：本地 up 为 -Y；Three 相机本地 up 为 +Y。
@@ -143,7 +153,7 @@ function getErrorTargetFromMapZoom(zoom) {
 /** 将 ECEF 3D Tiles 挂入当前 Mapbox Custom Layer 的 Three.js 场景。 */
 function add3dtitles(mapboxCamera, renderer, scene, map) {
     const tilesRenderer = new TilesRenderer(TILESET_URL);
-    const { mercatorFrame, mercatorOrigin } = createTilesMercatorFrame();
+    const { mercatorFrame, mercatorVertexOrigin } = createTilesMercatorFrame();
     // 每个已加载模型的顶点都会转为相对此原点的 Mercator 坐标；父级只做整体平移。
     mercatorFrame.add(tilesRenderer.group);
     scene.add(mercatorFrame);
@@ -181,17 +191,15 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
 
             // 不再使用 3d-tiles-renderer 内部的 Three 视锥：它无法直接处理 Mapbox 的 VP。
             // 改用原始 Mapbox VP 对 ECEF OBB 转换后的 8 个角点做裁剪测试。
-            // target.inView = tileIntersectsMapboxFrustum(tile, tilesRenderer, mapboxCamera, mercatorOrigin);
+            // target.inView = tileIntersectsMapboxFrustum(tile, tilesRenderer, mapboxCamera, mercatorVertexOrigin);
             target.inView = true;
 
             // SSE = geometricError / (距离 × 投影分母)。距离越近，误差越大，越需要细分。
             target.distance = distance;
-            // target.error = distance === 0
-            //     ? Infinity
-            //     : tile.geometricError / (distance * sseDenominator);
-            target.error = 0;
+            target.error = distance === 0
+                ? Infinity
+                : tile.geometricError / (distance * sseDenominator);
 
-            // console.log("target.error:::", target.error);
 
             return true;
         },
@@ -209,7 +217,6 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
     tilesRenderer.addEventListener('load-model', ({ scene }) => {
         // scene 及其子节点矩阵共同将 glTF 顶点放到 ECEF。ECEF -> Mercator 是非线性的，
         // 所以必须在 CPU 上逐顶点转换，不能再使用根节点的线性 makeBasis 近似。
-        scene.updateWorldMatrix(true, true);
         scene.traverse(child => {
             if (!child.isMesh) return;
 
@@ -218,9 +225,14 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
             const position = geometry.getAttribute('position');
             const ecefPosition = new THREE.Vector3();
             const mercatorPosition = new THREE.Vector3();
+            // matrixWorld 会混入外层的 Mercator 平移。这里只合成 scene 内部的
+            // glTF / 3D Tiles 节点矩阵，结果才是顶点所在的 ECEF 坐标。
+            const ecefMatrix = getMatrixRelativeToScene(child, scene);
+            const testP = new THREE.Vector3();
             for (let i = 0; i < position.count; i++) {
-                ecefPosition.fromBufferAttribute(position, i).applyMatrix4(child.matrixWorld);
-                ecefToMercator(ecefPosition, mercatorPosition).sub(mercatorOrigin);
+
+                ecefPosition.fromBufferAttribute(position, i).applyMatrix4(ecefMatrix);
+                ecefToMercator(ecefPosition, mercatorPosition).sub(mercatorVertexOrigin);
                 position.setXYZ(i, mercatorPosition.x, mercatorPosition.y, mercatorPosition.z);
             }
             position.needsUpdate = true;
@@ -263,6 +275,12 @@ function add3dtitles(mapboxCamera, renderer, scene, map) {
         tilesRenderer.setResolutionFromRenderer(tilesCamera, renderer);
         tilesRenderer.errorTarget = getErrorTargetFromMapZoom(map.getZoom());
         tilesRenderer.update();
+        tilesRenderer.forEachLoadedModel(loadedScene => {
+            if (loadedScene.parent !== tilesRenderer.group) {
+                tilesRenderer.group.add(loadedScene);
+            }
+            loadedScene.visible = true;
+        });
     };
 
     console.log('开始加载 3D Tiles:', TILESET_URL);
@@ -283,6 +301,20 @@ function ecefToMercator(ecefPosition, target = new THREE.Vector3()) {
     );
     const mercator = mapboxgl.MercatorCoordinate.fromLngLat([longitude, latitude], altitude);
     return target.set(mercator.x, mercator.y, mercator.z);
+}
+
+/** 合成 node 到 tile scene 根节点之间的局部矩阵，不包含 scene 外部的父级变换。 */
+function getMatrixRelativeToScene(node, scene) {
+    const result = new THREE.Matrix4().identity();
+    let current = node;
+    while (current) {
+        current.updateMatrix();
+        result.premultiply(current.matrix);
+        if (current === scene) return result;
+        current = current.parent;
+    }
+
+    throw new Error('3D Tiles mesh is not a child of its loaded scene.');
 }
 
 /** 将 Mapbox Mercator 世界坐标反算为 ECEF 米坐标。 */
