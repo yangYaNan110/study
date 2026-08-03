@@ -280,7 +280,7 @@
 
             map.on('style.load', () => {
                 addImageLayer();
-                // addTerrain();
+                addTerrain();
                 addCustomLayer();
                 // addGUI();
 
@@ -482,7 +482,7 @@
                     });
                     // OBJ 顶点相对原点存储；整体平移和旋转只由 modelFrame 承担。
                     modelFrame.add(object);
-                    applyModelCenter();
+                    // applyModelCenter();
                     console.log('OBJ model loaded successfully');
                     logMapState();
                 },

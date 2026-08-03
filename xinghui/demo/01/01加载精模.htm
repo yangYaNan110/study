@@ -375,7 +375,7 @@
         /** 将面板中的经纬度和高度转换为墨卡托坐标，作为模型的新定位点。 */
         function applyModelCenter() {
             if (!map || !objModel) return;
-
+            console.log(modelCenterParams, "yyn::...");
             const modelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
                 [modelCenterParams.x, modelCenterParams.y],
                 modelCenterParams.z
