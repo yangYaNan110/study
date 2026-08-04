@@ -15,7 +15,9 @@ export class EarthActor extends Actor {
         // Store 在 Actor 创建时生成，Earth 的所有组件共享这一份状态。
         this.store = new EarthStore(options.config);
         // Actor 只负责装配组件，不参与瓦片筛选或 Mesh 创建。
+        // 四叉树瓦片调度组件负责筛选和排序四叉树中的瓦片。
         const tileScheduler = new TileSchedulerComponent();
+        // 四叉树瓦片渲染组件负责渲染四叉树中的瓦片。
         const tileRender = new TileRenderComponent();
         this.addComponent(tileScheduler);
         this.addComponent(tileRender);
@@ -25,7 +27,11 @@ export class EarthActor extends Actor {
 export type { EarthConfig } from "./types/EarthConfig";
 export type { TileKey, TileRecord, TileStatus } from "./types/TileState";
 
-/** Convenience constructor for the common RenderController + Earth pairing. */
+/**
+ * 创建一个球体 Actor。
+ * @param config 地球配置。
+ * @returns 地球 Actor。
+ */
 export function createEarthActor(
     config: Partial<EarthConfig> = {},
 ) {

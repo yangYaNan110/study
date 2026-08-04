@@ -5,11 +5,13 @@ import { tileCenter } from "../../utils/TileMath";
 import { TileTree } from "./TileTree";
 
 export interface SelectedTile { key: TileKey; priority: number; }
-
-/** Selects tiles on the camera-facing hemisphere at a distance-derived LOD. */
+/**
+ * 瓦片选择器，根据相机位置选择可见的四叉树瓦片。
+ */
 export class TileSelector {
     private readonly tree = new TileTree();
 
+    /** 选择可见的四叉树瓦片。 */
     select(store: EarthStore, camera: THREE.Camera): SelectedTile[] {
         const position = new THREE.Vector3();
         camera.getWorldPosition(position);

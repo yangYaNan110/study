@@ -1,17 +1,22 @@
 import { TileTask } from "../../types/TileState";
 
-/** Small binary heap; higher priority values are dequeued first. */
+/** 
+ * 瓦片优先队列，用于管理待加载的四叉树瓦片任务。
+ */
 export class TilePriorityQueue {
     private readonly values: TileTask[] = [];
 
+    /** 获取当前队列中的任务数量*/
     get size() { return this.values.length; }
 
+    /** 将一个任务添加到队列中。 */
     push(task: TileTask) {
         // 新任务先追加到末尾，再向上调整以维持堆顶优先级最高。
         this.values.push(task);
         this.bubbleUp(this.values.length - 1);
     }
 
+    /** 从队列中取出优先级最高的任务。 */
     pop() {
         // 取走堆顶后，让末尾元素下沉恢复二叉堆结构。
         const first = this.values[0];
@@ -23,6 +28,7 @@ export class TilePriorityQueue {
         return first;
     }
 
+    /** 向上调整队列中的任务，保持二叉堆结构。 */
     private bubbleUp(index: number) {
         while (index > 0) {
             const parent = Math.floor((index - 1) / 2);
@@ -32,6 +38,7 @@ export class TilePriorityQueue {
         }
     }
 
+    /** 向下调整队列中的任务，保持二叉堆结构。 */
     private bubbleDown(index: number) {
         while (true) {
             const left = index * 2 + 1;

@@ -2,7 +2,9 @@ import { TileNode } from "../../types/TileNode";
 import { TileKey } from "../../types/TileState";
 import { tilesAtLevel } from "../../utils/TileMath";
 
-/** Logical quadtree only. It has no camera, network, or Three.js dependency. */
+/** 
+ * 囓叉树，用于管理四叉树瓦片的节点。
+ */
 export class TileTree {
     node(key: TileKey): TileNode {
         const count = tilesAtLevel(key.z);

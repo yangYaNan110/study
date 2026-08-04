@@ -1,12 +1,11 @@
 import * as THREE from "three";
 import { Component } from "../../../../system/Component";
-import { RenderController } from "../../../../system/RenderController";
 import { EarthStore } from "../../store/EarthStore";
 import { TileMeshFactory } from "./TileMeshFactory";
 import { EarthActor } from "../..";
 
-interface RenderedTile { mesh: THREE.Mesh; remove: () => void; }
-
+interface RenderedTile { mesh: THREE.Mesh; remove?: (() => void) }
+/** 四叉树瓦片渲染组件。 */
 export class TileRenderComponent extends Component {
     name = "tileRender";
     private readonly factory = new TileMeshFactory();

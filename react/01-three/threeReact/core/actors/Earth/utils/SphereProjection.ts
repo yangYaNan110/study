@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { TileKey } from "../types/TileState";
 import { tilesAtLevel } from "./TileMath";
 
-/** Creates an equirectangular quadtree patch on a sphere. */
+/** 创建一个四叉树瓦片的球面几何体。 */
 export function createTileGeometry(key: TileKey, radius: number, segments = 12) {
     const count = tilesAtLevel(key.z);
     // Three.js 的 SphereGeometry 用 phi 表示经度、theta 表示从北极开始的极角。

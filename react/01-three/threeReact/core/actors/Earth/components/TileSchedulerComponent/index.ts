@@ -5,11 +5,18 @@ import { TileLoader } from "./TileLoader";
 import { TilePriorityQueue } from "./TilePriorityQueue";
 import { TileSelector } from "./TileSelector";
 import { EarthActor } from "../..";
-
+/** 
+ * 瓦片调度组件，用于管理四叉树瓦片的加载和显示。
+ * 它负责选择需要显示的瓦片，将它们放入优先队列中，以及从队列中取出优先级最高的瓦片进行加载。
+ * 最后，它还会根据瓦片的状态和使用频率，自动缓存和移除瓦片，以优化性能。
+ */
 export class TileSchedulerComponent extends Component {
     name = "tileScheduler";
+    /** 瓦片选择器，用于选择需要显示的瓦片。 */
     private readonly selector = new TileSelector();
+    /** 瓦片优先队列，用于管理待加载的四叉树瓦片任务。 */
     private readonly queue = new TilePriorityQueue();
+    /** 瓦片加载器，用于加载四叉树瓦片的元数据。 */
     private readonly loader = new TileLoader();
     // 在 begin 阶段从所属 EarthActor 获取；destroy 后可清空以解除引用。
     store : EarthStore|null = null;
@@ -22,13 +29,13 @@ export class TileSchedulerComponent extends Component {
 
     tick() {
        // 取局部引用后做空值守卫；回调中使用局部变量可避免可空字段重新变宽。
-       const store = this.store;
-    const camera = this.camera;
+        const store = this.store;
+        const camera = this.camera;
 
-    if (!store || !camera) return;
+        if (!store || !camera) return;
         store.frame++;
         // 选择本帧需要显示的瓦片，并将该集合重新计算一遍。
-        const selected = this.selector.select(store, this.camera);
+        const selected = this.selector.select(store, camera);
         const desired = store.tileStore.desired;
         desired.clear();
 
@@ -48,6 +55,7 @@ export class TileSchedulerComponent extends Component {
         this.evictUnusedTiles();
     }
 
+    /** 开始加载队列中的任务。 */
     private startQueuedRequests() {
         if (!this.store) return;
         let loading = [...this.store.tileStore.tiles.values()].filter(tile => tile.status === "loading").length;
@@ -65,6 +73,7 @@ export class TileSchedulerComponent extends Component {
         }
     }
 
+    /** 淘汰未使用的瓦片。 */
     private evictUnusedTiles() {
         const store = this.store;
         if (!store) return;
@@ -79,5 +88,7 @@ export class TileSchedulerComponent extends Component {
         });
     }
     destroy(){
+        this.store = null;
+        this.camera = null;
     }
 }

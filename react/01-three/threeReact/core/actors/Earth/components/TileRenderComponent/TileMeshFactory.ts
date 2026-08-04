@@ -2,8 +2,9 @@ import * as THREE from "three";
 import { EarthStore } from "../../store/EarthStore";
 import { TileRecord } from "../../types/TileState";
 import { createTileGeometry } from "../../utils/SphereProjection";
-
+/** 四叉树瓦片网格工厂。 */
 export class TileMeshFactory {
+    /** 创建一个四叉树瓦片网格。 */ 
     create(tile: TileRecord, store: EarthStore) {
         // Geometry 只覆盖当前 z/x/y 对应的球面局部 patch。
         const geometry = createTileGeometry(tile.key, store.config.radius);
@@ -16,7 +17,7 @@ export class TileMeshFactory {
         });
         return new THREE.Mesh(geometry, material);
     }
-
+    /** 释放四叉树瓦片网格占用的 WebGL 资源。 */
     dispose(mesh: THREE.Mesh) {
         // 从 Scene 移除不等于释放 WebGL 资源，Geometry 和 Material 都要显式 dispose。
         mesh.geometry.dispose();
