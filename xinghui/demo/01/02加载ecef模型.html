@@ -491,12 +491,12 @@
                                         // 少量自发光只用于抬亮暗部，仍保留灯光带来的立体感。
                                         emissive: 0x5a3100,
                                         emissiveIntensity: 0.35,
-                                        polygonOffset: true,
-                                        polygonOffsetFactor: -10,
-                                        polygonOffsetUnits: -100,
+                                        // polygonOffset: true,
+                                        // polygonOffsetFactor: -10,
+                                        // polygonOffsetUnits: -100,
                                         // depthWrite: false
                                         // side: THREE.DoubleSide,
-                                        // depthTest: false,
+                                        depthTest: false,
                                     });
                                     // 关闭视锥裁剪，避免地图相机下模型被错误隐藏。
                                     child.frustumCulled = false;
