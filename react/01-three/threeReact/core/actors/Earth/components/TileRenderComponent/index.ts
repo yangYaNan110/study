@@ -20,8 +20,9 @@ export class TileRenderComponent extends Component {
         if(!this.store){
             return;
         }
+        /** 遍历所有四叉树瓦片，渲染已加载的瓦片。 */
         for (const tile of this.store.tileStore.tiles.values()) {
-            // 资源 ready 后只创建一次 Mesh，之后复用注册结果。
+            /** 资源 ready 后只创建一次 Mesh，之后复用注册结果。 */
             if (tile.status !== "ready" || this.rendered.has(tile.id)) continue;
             const mesh = this.factory.create(tile, this.store);
             this.rendered.set(tile.id, { mesh, remove: this.controller?.addRenderable(mesh) });
@@ -29,7 +30,7 @@ export class TileRenderComponent extends Component {
         for (const [id, rendered] of this.rendered) {
             // 调度器淘汰记录后，在这里注销场景对象并释放 GPU 资源。
             if (this.store.tileStore.tiles.has(id)) continue;
-            rendered.remove();
+            rendered.remove?.();
             this.factory.dispose(rendered.mesh);
             this.rendered.delete(id);
         }
@@ -38,7 +39,7 @@ export class TileRenderComponent extends Component {
     destroy() {
         // Actor 卸载时同样必须释放还在缓存中的渲染资源。
         for (const rendered of this.rendered.values()) {
-            rendered.remove();
+            rendered.remove?.();
             this.factory.dispose(rendered.mesh);
         }
         this.rendered.clear();

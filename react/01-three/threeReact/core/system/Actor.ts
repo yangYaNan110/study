@@ -38,6 +38,11 @@ export class Actor {
     }
     // 销毁对象
     destroy(){
-
+        //处理自己的销毁 以及组件的销毁
+        
+        //
+        this.components.forEach((com)=>{
+            com?.destroy();
+        })
     }
 }
