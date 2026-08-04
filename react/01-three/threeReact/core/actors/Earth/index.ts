@@ -20,10 +20,10 @@ export class EarthActor extends Actor {
         /** 四叉树瓦片调度组件负责筛选和排序四叉树中的瓦片。 */
         const tileScheduler = new TileSchedulerComponent();
         /** 四叉树瓦片渲染组件负责渲染四叉树中的瓦片。 */
-        const tileRender = new TileRenderComponent();
+        // const tileRender = new TileRenderComponent();
         
         this.addComponent(tileScheduler);
-        this.addComponent(tileRender);
+        // this.addComponent(tileRender);
     }
 }
 
@@ -39,4 +39,9 @@ export function createEarthActor(
     config: Partial<EarthConfig> = {},
 ) {
     return new EarthActor({  config });
+}
+
+export function createTileRenderComponent(
+) {
+    return new TileRenderComponent();
 }

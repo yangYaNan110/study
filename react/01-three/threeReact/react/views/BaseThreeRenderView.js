@@ -12,3 +12,4 @@ function BaseThreeRenderView({ store = {}, children }) {
         {children}
     </RenderView>
 }
+export default BaseThreeRenderView;

@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import RenderViewProvider from "../context/RenderViewProvider";
 /**
  *
- * 基础的视图组件
+ * 基础的视图组件 视图下面可以有很多的actor
  * @param controller : 渲染控制器
- * @param store : 业务store
+ * @param store : 业务store 用于存储业务状态 最好是一个react的context 后期可能不用props了
  */
 
 function RenderView({ children, controller, store }) {
