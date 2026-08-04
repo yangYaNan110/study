@@ -185,8 +185,10 @@
                     );
                 }
 
-                // 通知 Three.js 顶点缓冲区已被改写，并重建包围体。
+                // 顶点经过 ECEF -> Mercator 的非线性转换后，原 OBJ 法线已不再可靠。
+                // 按转换后的三角面重算法线，避免光照计算将局部面渲染为黑色。
                 position.needsUpdate = true;
+                child.geometry.computeVertexNormals();
                 child.geometry.computeBoundingBox();
                 child.geometry.computeBoundingSphere();
             });
@@ -444,21 +446,21 @@
                     scene = new THREE.Scene();
 
                     // 添加第一盏平行光，为模型提供一个方向上的主光照。
-                    const directionalLight = new THREE.DirectionalLight(0xffffff);
+                    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
                     // 设置光源位置并归一化方向向量。
                     directionalLight.position.set(0, -70, 100).normalize();
                     // 将主光源加入场景。
                     scene.add(directionalLight);
 
                     // 添加另一侧的平行光，减少模型背面的阴暗区域。
-                    const directionalLight2 = new THREE.DirectionalLight(0xffffff);
+                    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1.0);
                     // 设置第二盏平行光的位置并归一化其方向。
                     directionalLight2.position.set(0, 70, 100).normalize();
                     // 将第二盏平行光加入场景。
                     scene.add(directionalLight2);
 
                     // 添加环境光，为所有表面提供基础亮度。
-                    const ambientLight = new THREE.AmbientLight(0x404040);
+                    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
                     // 将环境光加入场景。
                     scene.add(ambientLight);
 
@@ -482,13 +484,19 @@
                                     child.material = new THREE.MeshStandardMaterial({
                                     // child.material = new THREE.MeshBasicMaterial({
 
-                                        color: 0xffaa00,
-                                        roughness: 0.8,
-                                        metalness: 0.2,
-                                        // polygonOffset: true,
-                                        // polygonOffsetFactor: -2,
-                                        // polygonOffsetUnits: -1,
-                                        depthTest: false,
+                                        color: 0xffb52a,
+                                        // 降低金属感，避免背光面的反射被压得过暗。
+                                        roughness: 0.6,
+                                        metalness: 0.05,
+                                        // 少量自发光只用于抬亮暗部，仍保留灯光带来的立体感。
+                                        emissive: 0x5a3100,
+                                        emissiveIntensity: 0.35,
+                                        polygonOffset: true,
+                                        polygonOffsetFactor: -10,
+                                        polygonOffsetUnits: -100,
+                                        // depthWrite: false
+                                        // side: THREE.DoubleSide,
+                                        // depthTest: false,
                                     });
                                     // 关闭视锥裁剪，避免地图相机下模型被错误隐藏。
                                     child.frustumCulled = false;
