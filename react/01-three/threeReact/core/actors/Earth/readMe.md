@@ -14,20 +14,13 @@ Earth/
 │   │   ├── index.ts
 │   │   ├── TileSelector.ts
 │   │   ├── TilePriorityQueue.ts
-│   │   ├── TileRequestQueue.ts
-│   │   └── TileScheduler.ts
+│   │   ├── TileTree.ts
+│   │   ├── TileLoader.ts
+│   │   └── index.ts               # TileSchedulerComponent
 │   │
 │   ├── TileRenderComponent/
 │   │   ├── index.ts
-│   │   ├── TileMeshFactory.ts
-│   │   ├── TileMaterialFactory.ts
-│   │   └── TileRenderRegistry.ts
-│   │
-│   └── TileLoaderComponent/
-│       ├── index.ts
-│       ├── TileLoader.ts
-│       ├── TileRequest.ts
-│       └── TileCache.ts
+│   │   └── TileMeshFactory.ts
 │
 ├── store/
 │   ├── EarthStore.ts
@@ -35,16 +28,11 @@ Earth/
 │
 ├── types/
 │   ├── EarthConfig.ts
-│   ├── TileKey.ts
 │   ├── TileNode.ts
-│   ├── TileState.ts
-│   ├── TileSource.ts
-│   └── TileTask.ts
+│   └── TileState.ts               # TileKey、TileRecord、TileTask
 │
 └── utils/
     ├── TileMath.ts
-    ├── TileScheme.ts
-    ├── FrustumUtils.ts
     └── SphereProjection.ts
 ```
 

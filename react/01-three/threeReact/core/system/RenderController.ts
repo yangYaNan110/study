@@ -29,6 +29,7 @@ export class RenderController {
             return;
         }
         this.actors.push(actor);
+        actor.attach(this);
         actor.begin();
         return ()=>{
             const index = this.actors.indexOf(actor);
@@ -37,6 +38,9 @@ export class RenderController {
                 actor.destroy();
             }
         }
+    }
+    getActorByName(name:string){
+        return this.actors.find(actor=>actor.name===name);
     }
     render(){
         //处理actor副作用 1. 调用tick 2. 收集需要渲染的对象和后处理pass

@@ -1,4 +1,5 @@
 import { Component } from "./Component";
+import { RenderController } from "./RenderController";
 
 // 场景中的对象
 export class Actor {
@@ -6,6 +7,7 @@ export class Actor {
     components: Component[] = [];
     //actor的名字 用于标识actor对象
     name='';
+    controller:RenderController|null = null;
 
     addComponent(component: Component) {
         if(!component){
@@ -22,7 +24,9 @@ export class Actor {
             }
         }
     }
-    
+    attach(controller:RenderController){
+        this.controller=controller;
+    }
     begin() {
        
     }
