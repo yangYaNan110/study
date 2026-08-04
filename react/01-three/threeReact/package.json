@@ -1,0 +1,15 @@
+{
+  "name": "threereact",
+  "version": "1.0.0",
+  "description": "- 准备结合threejs 写一个类似UE的库，可以通过react组件吧actor添加到场景中 并且通过添加组件来增强actor - 通过composer = new EffectComposer(renderer);来控制渲染和后处理部分",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  }
+}
