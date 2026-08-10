@@ -81,7 +81,7 @@
 
         const imageSourceId = 'image-source';
         const imageLayerId = 'image-layer';
-        const imageUrl = './3dobj/dom/{z}/{x}/{y}.png';
+        const imageUrl = '../3dobj/dom/{z}/{x}/{y}.png';
 
         // 从模型元数据读取的精确原点；与控制面板的初始经纬度保持同一来源。
         const modelOrigin = [modelCenterParams.x, modelCenterParams.y];
@@ -285,7 +285,7 @@
                     // raster-dem 在 Mapbox Worker 中加载，需使用绝对 URL。
                     // 仅转换目录前缀；若将 {z}/{x}/{y} 直接传给 URL()，会被编码为 %7Bz%7D。
                     tiles: [
-                        `${new URL('./3dobj/tiles/', window.location.href).href}{z}/{x}/{y}.png`,
+                        `${new URL('../3dobj/tiles/', window.location.href).href}{z}/{x}/{y}.png`,
                     ],
                     tileSize: 512,
                     encoding: 'mapbox',
@@ -471,7 +471,7 @@
                     // 异步加载 OBJ 文件，并分别处理成功、进度和失败情况。
                     loader.load(
                         // 指定 OBJ 文件的相对路径。
-                        "./落汤鸡/目标三维模型-精模/目标1三维模型-精模_ecef.obj",
+                        "../落汤鸡/目标三维模型-精模/目标1三维模型-精模_ecef.obj",
                         (object) => {
                             console.log('object',object);
                             // 缓存已加载的模型对象，供其他交互逻辑使用。
