@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>3D OBJ 111</title>
+    <title>3D OBJ ecef--暂时把高程去掉 同时保证模型贴地 后面解决层级大的时候 地形加载性能 </title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.25.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.25.0/mapbox-gl.js"></script>
@@ -40,6 +40,7 @@
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
         import { MAPBOX_TOKEN } from '../public/token.js';
+
 
 
         const baseMapStyles = {
@@ -172,7 +173,7 @@
         }
 
         async function loadDemTile(x, y) {
-            const tileRoot = new URL('./3dobj/tiles/', window.location.href).href;
+            const tileRoot = new URL('../3dobj/tiles/', window.location.href).href;
             const response = await fetch(`${tileRoot}${flattenedModelDemZoom}/${x}/${y}.png`);
             if (!response.ok) throw new Error(`DEM 瓦片加载失败：${response.status}`);
             const bitmap = await createImageBitmap(await response.blob());
@@ -314,60 +315,9 @@
             }
         }
 
-        /** 注册与测绘模型同批次产出的本地 DEM，并根据开关启用或关闭三维地形。 */
-        function addTerrain() {
-            //study/xinghui/demo/01/落汤鸡/单目标DEM/dem_wgs84/10/238/383.png
-            if (!map.getSource('local-model-dem')) {
-                console.log('addTerrain:::yyn...');
-                map.addSource('local-model-dem', {
-
-                    type: 'raster-dem',
-                    // dem_wgs84.tif 已切为 Mapbox Terrain-RGB 瓦片；RGB 可还原为米单位高程。
-                    // 它与 OBJ、DOM 是同一测绘成果，避免使用 Mapbox 全球 DEM 带来的局部起伏差异。
-                    // study/xinghui/demo/01
-                    // study/xinghui/demo/01/3dobj/tiles/13/1911/3066.png
-                    // raster-dem 在 Mapbox Worker 中加载，需使用绝对 URL。
-                    // 仅转换目录前缀；若将 {z}/{x}/{y} 直接传给 URL()，会被编码为 %7Bz%7D。
-                    tiles: [
-                        `${new URL('../3dobj/tiles/', window.location.href).href}{z}/{x}/{y}.png`,
-                    ],
-                    tileSize: 512,
-                    encoding: 'mapbox',
-                    minzoom: 0,
-                    maxzoom: 15,
-                });
-            }
-
-            if (terrainParams.enabled) {
-                map.setTerrain({
-                    source: 'local-model-dem',
-                    exaggeration: terrainParams.exaggeration,
-                });
-            } else {
-                map.setTerrain(null);
-            }
-        }
-
-        /** 在地形已启用时，更新地形的垂直夸张倍数。 */
-        function updateTerrainExaggeration(value) {
-            if (terrainParams.enabled) {
-                map.setTerrain({
-                    source: 'local-model-dem',
-                    exaggeration: value,
-                });
-            }
-        }
-
-        /** 根据控制面板的开关启用或清除地图地形。 */
-        function toggleTerrain(enabled) {
-            if (enabled) {
-                map.setTerrain({
-                    source: 'local-model-dem',
-                    exaggeration: terrainParams.exaggeration,
-                });
-            } else {
-                map.setTerrain(null);
-            }
+        /** 扁平化模型的定位高度只使用控制面板给出的相对高度。 */
+        function getRenderedModelAltitude() {
+            return modelCenterParams.z;
         }
 
         /** 切换本地栅格影像图层的显示状态。 */

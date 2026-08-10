@@ -39,7 +39,7 @@
         import * as THREE from 'three';
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
-        import { MAPBOX_TOKEN } from './token.js';
+        import { MAPBOX_TOKEN } from '../public/token.js';
 
         const baseMapStyles = {
             '卫星影像': 'mapbox://styles/mapbox/satellite-v9',
@@ -79,7 +79,7 @@
 
         const imageSourceId = 'image-source';
         const imageLayerId = 'image-layer';
-        const imageUrl = './3dobj/dom/{z}/{x}/{y}.png';
+        const imageUrl = '../3dobj/dom/{z}/{x}/{y}.png';
 
         // 从模型元数据读取的精确原点；与控制面板的初始经纬度保持同一来源。
         const modelOrigin = [modelCenterParams.x, modelCenterParams.y];
@@ -502,7 +502,7 @@
                         // 指定 OBJ 文件的相对路径。
                         // './3dobj/enu/model_enu_xyz_noflip.obj',
                         // './3dobj/enu/test.obj',
-                        "./落汤鸡/目标三维模型-精模/目标1三维模型-精模.obj",
+                        "../落汤鸡/目标三维模型-精模/目标1三维模型-精模.obj",
 
                         (object) => {
                             console.log('object',object);

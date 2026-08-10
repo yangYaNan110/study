@@ -39,7 +39,8 @@
         import * as THREE from 'three';
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
-        import { MAPBOX_TOKEN } from '../01/token.js';
+        import { MAPBOX_TOKEN } from '../public/token.js';
+
         import add3dtitles from './js/add3dtitles.js';
 
         const baseMapStyles = {
@@ -80,7 +81,7 @@
 
         const imageSourceId = 'image-source';
         const imageLayerId = 'image-layer';
-        const imageUrl = '../01/3dobj/dom/{z}/{x}/{y}.png';
+        const imageUrl = '../3dobj/dom/{z}/{x}/{y}.png';
 
         // 从模型元数据读取的精确原点；与控制面板的初始经纬度保持同一来源。
         const modelOrigin = [modelCenterParams.x, modelCenterParams.y];
@@ -465,7 +466,7 @@
 
             const loader = new OBJLoader();
             loader.load(
-                "../01/落汤鸡/目标三维模型-精模/目标1三维模型-精模.obj",
+                "../落汤鸡/目标三维模型-精模/目标1三维模型-精模.obj",
                 (object) => {
                     console.log('object', object);
                     objModel = object;
