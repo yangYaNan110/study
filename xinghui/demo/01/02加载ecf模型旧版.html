@@ -41,6 +41,7 @@
 
         import { MAPBOX_TOKEN } from './token.js';
 
+
         const baseMapStyles = {
             '卫星影像': 'mapbox://styles/mapbox/satellite-v9',
             '卫星影像+标注': 'mapbox://styles/mapbox/satellite-streets-v12',
@@ -56,9 +57,10 @@
             modelVisible: true,
         };
 
-        // 启动时用 z15 Terrain-RGB 将模型转为“相对地面高度”，运行时不启用 Mapbox terrain。
-        const flattenedModelDemZoom = 15;
-        const flattenedModelDemTileSize = 512;
+        const terrainParams = {
+            enabled: true,
+            exaggeration: 1.0,
+        };
 
         const modelCenterParams = {
             x: -95.92740622846694,
@@ -141,96 +143,56 @@
          * 这里改为：ECEF -> LLA -> Mercator。每个顶点使用自身的经纬度，
          * 因而不会因 Web Mercator 比例随纬度变化而造成模型两侧与中部对不齐。
          */
-        function getDemTileCoordinate(lng, lat) {
-            const tileCount = 2 ** flattenedModelDemZoom;
-            const latRad = lat * Math.PI / 180;
-            const xFloat = (lng + 180) / 360 * tileCount;
-            const yFloat = (1 - Math.asinh(Math.tan(latRad)) / Math.PI) / 2 * tileCount;
-            const x = Math.floor(xFloat);
-            const y = Math.floor(yFloat);
-            return {x, y, pixelX: (xFloat - x) * flattenedModelDemTileSize, pixelY: (yFloat - y) * flattenedModelDemTileSize};
-        }
-
-        function decodeTerrainRgb(data, width, x, y) {
-            const offset = (y * width + x) * 4;
-            return -10000 + (data[offset] * 65536 + data[offset + 1] * 256 + data[offset + 2]) * 0.1;
-        }
-
-        function sampleDemHeight(tile, pixelX, pixelY) {
-            const x0 = Math.max(0, Math.min(tile.width - 1, Math.floor(pixelX)));
-            const y0 = Math.max(0, Math.min(tile.height - 1, Math.floor(pixelY)));
-            const x1 = Math.min(tile.width - 1, x0 + 1);
-            const y1 = Math.min(tile.height - 1, y0 + 1);
-            const tx = Math.max(0, Math.min(1, pixelX - x0));
-            const ty = Math.max(0, Math.min(1, pixelY - y0));
-            const h00 = decodeTerrainRgb(tile.data, tile.width, x0, y0);
-            const h10 = decodeTerrainRgb(tile.data, tile.width, x1, y0);
-            const h01 = decodeTerrainRgb(tile.data, tile.width, x0, y1);
-            const h11 = decodeTerrainRgb(tile.data, tile.width, x1, y1);
-            return (h00 * (1 - tx) + h10 * tx) * (1 - ty) + (h01 * (1 - tx) + h11 * tx) * ty;
-        }
-
-        async function loadDemTile(x, y) {
-            const tileRoot = new URL('./3dobj/tiles/', window.location.href).href;
-            const response = await fetch(`${tileRoot}${flattenedModelDemZoom}/${x}/${y}.png`);
-            if (!response.ok) throw new Error(`DEM 瓦片加载失败：${response.status}`);
-            const bitmap = await createImageBitmap(await response.blob());
-            const canvas = document.createElement('canvas');
-            canvas.width = bitmap.width;
-            canvas.height = bitmap.height;
-            const context = canvas.getContext('2d', {willReadFrequently: true});
-            context.drawImage(bitmap, 0, 0);
-            bitmap.close();
-            const image = context.getImageData(0, 0, canvas.width, canvas.height);
-            return {width: image.width, height: image.height, data: image.data};
-        }
-
-        /** 将 OBJ 转为 Mercator 坐标，并逐顶点扣除 z15 Terrain-RGB 地面高程。 */
-        async function projectEnuVerticesToMercator(object) {
-            const mercatorOrigin = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
-            const vertices = [];
-            const requiredTiles = new Map();
+        function projectEnuVerticesToMercator(object) {
+            
+            // 以模型原点为锚点存储相对 Mercator 坐标；渲染时再整体平移到地图位置。
+            const mercatorOrigin = mapboxgl.MercatorCoordinate.fromLngLat(
+                modelOrigin,
+                modelAltitude
+            );
             object.traverse((child) => {
                 if (!child.isMesh || !child.geometry?.attributes?.position) return;
+
                 const position = child.geometry.attributes.position;
+                // 复用向量对象，避免遍历大量顶点时反复创建对象。
                 const ecefVertex = new THREE.Vector3();
+                // console.log('=== 顶点 ===', position);
+                // # offset_x = -496845.585
+                // # offset_y = -4787606.399
+                // # offset_z = 4171388.400
+                //得到的就是ecef坐标了
                 for (let index = 0; index < position.count; index += 1) {
-                    ecefVertex.set(position.getX(index) + offsetX, position.getY(index) + offsetY, position.getZ(index) + offsetZ);
-                    const [lng, lat, altitude] = ecefToLla(ecefVertex.x, ecefVertex.y, ecefVertex.z);
-                    const demCoordinate = getDemTileCoordinate(lng, lat);
-                    const tileKey = `${demCoordinate.x}/${demCoordinate.y}`;
-                    requiredTiles.set(tileKey, demCoordinate);
-                    vertices.push({position, index, lng, lat, altitude, demCoordinate, tileKey});
+                    const eastMeters = position.getX(index);
+                    const northMeters = position.getY(index);
+                    const upMeters = position.getZ(index);
+                    ecefVertex
+                        .set(eastMeters+offsetX, northMeters+offsetY, upMeters+offsetZ)
+
+                    const [vertexLon, vertexLat, vertexAltitude] = ecefToLla(
+                        ecefVertex.x,
+                        ecefVertex.y,
+                        ecefVertex.z
+                    );
+                    const vertexMercator = mapboxgl.MercatorCoordinate.fromLngLat(
+                        [vertexLon, vertexLat],
+                        vertexAltitude
+                    );
+
+                    position.setXYZ(
+                        index,
+                        vertexMercator.x - mercatorOrigin.x,
+                        vertexMercator.y - mercatorOrigin.y,
+                        vertexMercator.z - mercatorOrigin.z
+                    );
                 }
-            });
 
-            const demTiles = new Map();
-            await Promise.all([...requiredTiles.entries()].map(async ([key, coordinate]) => {
-                demTiles.set(key, await loadDemTile(coordinate.x, coordinate.y));
-            }));
-
-            for (const vertex of vertices) {
-                const groundAltitude = sampleDemHeight(
-                    demTiles.get(vertex.tileKey),
-                    vertex.demCoordinate.pixelX,
-                    vertex.demCoordinate.pixelY
-                );
-                const mercator = mapboxgl.MercatorCoordinate.fromLngLat(
-                    [vertex.lng, vertex.lat],
-                    vertex.altitude - groundAltitude
-                );
-                vertex.position.setXYZ(vertex.index, mercator.x - mercatorOrigin.x, mercator.y - mercatorOrigin.y, mercator.z - mercatorOrigin.z);
-            }
-
-            object.traverse((child) => {
-                if (!child.isMesh || !child.geometry?.attributes?.position) return;
-                const position = child.geometry.attributes.position;
+                // 顶点经过 ECEF -> Mercator 的非线性转换后，原 OBJ 法线已不再可靠。
+                // 按转换后的三角面重算法线，避免光照计算将局部面渲染为黑色。
                 position.needsUpdate = true;
                 child.geometry.computeVertexNormals();
                 child.geometry.computeBoundingBox();
                 child.geometry.computeBoundingSphere();
             });
-            console.log(`模型已扣除 z${flattenedModelDemZoom} DEM 高程`, {vertices: vertices.length, demTiles: demTiles.size});
         }
 
         /** 在控制台输出当前地图视角、模型位置/可见性和地形配置，便于调试。 */
@@ -252,7 +214,10 @@
                         ecef: llaToEcef(modelCenterParams.x, modelCenterParams.y, modelCenterParams.z),
                     },
                 },
-                terrain: {enabled: false},
+                terrain: {
+                    enabled: terrainParams.enabled,
+                    exaggeration: terrainParams.exaggeration,
+                },
             };
         }
 
@@ -265,11 +230,12 @@
                 zoom: 13,
                 center: [-95.904606, 41.116996],
                 pitch: 0,
-                // antialias: true,
+                antialias: true,
             });
 
             map.on('style.load', () => {
                 addImageLayer();
+                addTerrain();
                 addCustomECEFObjLayer();
                 // addGUI();
 
@@ -288,17 +254,7 @@
                     type: 'raster',
                     tiles: [imageUrl],
                     tileSize: 256,
-                    maxzoom: 18,
                 });
-                // map.addSource(imageSourceId, {
-                //     type: 'raster',
-                //     tiles: [
-                //         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                //     ],
-                //     tileSize: 256,
-                //     maxzoom: 19,
-                //     attribution: '© OpenStreetMap contributors',
-                // });
             }
 
             if (!map.getLayer(imageLayerId)) {
@@ -313,9 +269,60 @@
             }
         }
 
-        /** 扁平化模型的定位高度只使用控制面板给出的相对高度。 */
-        function getRenderedModelAltitude() {
-            return modelCenterParams.z;
+        /** 注册与测绘模型同批次产出的本地 DEM，并根据开关启用或关闭三维地形。 */
+        function addTerrain() {
+            //study/xinghui/demo/01/落汤鸡/单目标DEM/dem_wgs84/10/238/383.png
+            if (!map.getSource('local-model-dem')) {
+                console.log('addTerrain:::yyn...');
+                map.addSource('local-model-dem', {
+
+                    type: 'raster-dem',
+                    // dem_wgs84.tif 已切为 Mapbox Terrain-RGB 瓦片；RGB 可还原为米单位高程。
+                    // 它与 OBJ、DOM 是同一测绘成果，避免使用 Mapbox 全球 DEM 带来的局部起伏差异。
+                    // study/xinghui/demo/01
+                    // study/xinghui/demo/01/3dobj/tiles/13/1911/3066.png
+                    // raster-dem 在 Mapbox Worker 中加载，需使用绝对 URL。
+                    // 仅转换目录前缀；若将 {z}/{x}/{y} 直接传给 URL()，会被编码为 %7Bz%7D。
+                    tiles: [
+                        `${new URL('./3dobj/tiles/', window.location.href).href}{z}/{x}/{y}.png`,
+                    ],
+                    tileSize: 512,
+                    encoding: 'mapbox',
+                    minzoom: 0,
+                    maxzoom: 15,
+                });
+            }
+
+            if (terrainParams.enabled) {
+                map.setTerrain({
+                    source: 'local-model-dem',
+                    exaggeration: terrainParams.exaggeration,
+                });
+            } else {
+                map.setTerrain(null);
+            }
+        }
+
+        /** 在地形已启用时，更新地形的垂直夸张倍数。 */
+        function updateTerrainExaggeration(value) {
+            if (terrainParams.enabled) {
+                map.setTerrain({
+                    source: 'local-model-dem',
+                    exaggeration: value,
+                });
+            }
+        }
+
+        /** 根据控制面板的开关启用或清除地图地形。 */
+        function toggleTerrain(enabled) {
+            if (enabled) {
+                map.setTerrain({
+                    source: 'local-model-dem',
+                    exaggeration: terrainParams.exaggeration,
+                });
+            } else {
+                map.setTerrain(null);
+            }
         }
 
         /** 切换本地栅格影像图层的显示状态。 */
@@ -341,7 +348,7 @@
 
             const modelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
                 [modelCenterParams.x, modelCenterParams.y],
-                getRenderedModelAltitude()
+                modelCenterParams.z
             );
 
             modelTransform.translateX = modelAsMercatorCoordinate.x;
@@ -360,7 +367,7 @@
 
             const currentMercator = mapboxgl.MercatorCoordinate.fromLngLat(
                 [modelCenterParams.x, modelCenterParams.y],
-                getRenderedModelAltitude()
+                modelCenterParams.z
             );
 
             const scale = currentMercator.meterInMercatorCoordinateUnits();
@@ -374,7 +381,6 @@
 
             modelCenterParams.x = newLngLat.lng;
             modelCenterParams.y = newLngLat.lat;
-            // 控制面板保存的是相对地形的用户高度；平面模式的贴地补偿不写入面板值。
             modelCenterParams.z = newMercator.toAltitude();
 
             modelTransform.translateX = newX;
@@ -395,6 +401,7 @@
 
                 map.once('styledata', () => {
                     addImageLayer();
+                    addTerrain();
                 });
             }
         }
@@ -464,19 +471,13 @@
                     loader.load(
                         // 指定 OBJ 文件的相对路径。
                         "./落汤鸡/目标三维模型-精模/目标1三维模型-精模_ecef.obj",
-                        async (object) => {
+                        (object) => {
                             console.log('object',object);
                             // 缓存已加载的模型对象，供其他交互逻辑使用。
                             objModel = object;
                             // 将每个 ENU 米单位顶点转换为自身对应的 Mercator 坐标，
                             // 不再使用原点处的单一 Mercator 比例尺缩放整个模型。
-                            try {
-                                await projectEnuVerticesToMercator(object);
-                            } catch (error) {
-                                console.error('模型 DEM 扣高程失败，未添加模型：', error);
-                                objModel = null;
-                                return;
-                            }
+                            projectEnuVerticesToMercator(object);
                             // 遍历模型层级，为其中的网格统一设置材质和裁剪策略。
                             object.traverse((child) => {
                                 if (child.isMesh) {
@@ -491,12 +492,12 @@
                                         // 少量自发光只用于抬亮暗部，仍保留灯光带来的立体感。
                                         emissive: 0x5a3100,
                                         emissiveIntensity: 0.35,
-                                        //  polygonOffset: true,
-                                        //  polygonOffsetFactor: -10,
-                                        //  polygonOffsetUnits: -100,
+                                        // polygonOffset: true,
+                                        // polygonOffsetFactor: -10,
+                                        // polygonOffsetUnits: -100,
                                         // depthWrite: false
                                         // side: THREE.DoubleSide,
-                                        // depthTest: false,
+                                        depthTest: false,
                                     });
                                     // 关闭视锥裁剪，避免地图相机下模型被错误隐藏。
                                     child.frustumCulled = false;
@@ -530,7 +531,6 @@
                         canvas: map.getCanvas(),
                         context: gl,
                         antialias: true,
-                        
                     });
 
                     // 禁止 Three.js 自动清空画布，保留 Mapbox 已绘制的地图内容。
@@ -623,6 +623,11 @@
             modelRotateOptions.add(modelRotate, 'y').name('Rotate Y').min(-Math.PI).max(Math.PI).step(0.01);
             modelRotateOptions.add(modelRotate, 'z').name('Rotate Z').min(-Math.PI).max(Math.PI).step(0.01);
             modelRotateOptions.open();
+
+            const terrainOptions = gui.addFolder('Terrain Options');
+            terrainOptions.add(terrainParams, 'enabled').name('Terrain').onChange(toggleTerrain);
+            terrainOptions.add(terrainParams, 'exaggeration').name('Exaggeration').min(0).max(5).step(0.1).onChange(updateTerrainExaggeration);
+            terrainOptions.open();
 
             gui.open();
         }
