@@ -1,91 +1,154 @@
-# Mapbox GL JS v3.25.0 Terrain 高层级卡顿排查全过程
+# Mapbox Terrain 高层级卡顿：排查全过程
 
-## 1. 问题背景
-
-项目使用 Mapbox GL JS v3.25.0，并叠加：
-
-- 本地 raster 影像
-- 本地 raster-dem 地形
-- Three.js 自定义 3D 模型
-- `pitch = 0`
-- 持续放大地图到 z18、z19、z20
-
-最初现象是：
-
-```text
-低层级：流畅
-高层级：明显卡顿
-```
-
-一开始并不知道是 CPU、GPU、纹理上传、Shader，还是 terrain tile 数量导致的。
+> 环境：Mapbox GL JS v3.25.0  
+> 现象：开启 `raster-dem` Terrain 后，低层级流畅，高层级（例如 z18～z20）明显卡顿；关闭 Terrain 后恢复流畅。
 
 ---
 
-## 2. 第一阶段：先定位“卡在哪里”
+## 1. 问题现象
 
-最先通过浏览器 Performance / Spector.js 观察 GPU 渲染。
+项目中 Terrain 大致这样配置：
 
-发现两个非常明显的现象：
+```js
+map.addSource('local-model-dem', {
+  type: 'raster-dem',
+  tiles: [...],
+  tileSize: 512,
+  maxzoom: 15
+});
 
-```text
-1. 高层级时 Draw Call 数量明显增加
-2. 大量 drawElements(TRIANGLES, ...) 出现
+map.setTerrain({
+  source: 'local-model-dem'
+});
 ```
 
-并且单次 draw 不是简单的：
+实际现象：
 
-```text
-6 indices
-2 triangles
-```
+- 低 zoom 时基本流畅；
+- zoom 越高越卡；
+- 相机停留不动后，卡顿也不会明显缓解；
+- DEM 最大层级只有 15，但相机 zoom 到 18、19、20 后，Terrain draw call 仍然明显增加；
+- Performance 面板中能看到 `gl.texSubImage2D` 等 GPU 相关耗时；
+- Spector.js 中 Terrain 的 draw call 数量在高 zoom 时暴增；
+- 关闭 Terrain 后性能立即恢复。
 
-而是能看到接近：
+最开始最反直觉的问题是：
 
-```text
-~100k indices
-```
+> 高 zoom 时，屏幕能看到的地理范围明明更小，为什么 Terrain 反而需要绘制更多 tile？
 
-这种量级。
+---
 
-这说明问题不像是：
+## 2. 第一阶段：怀疑纹理上传
 
-```text
-“多画了几个普通 raster quad”
-```
-
-而更像是：
-
-```text
-Terrain 的高密度 GRID 被重复绘制很多次
-```
-
-同时 Performance 面板中还曾观察到：
+最早从 Performance 面板看到：
 
 ```text
 gl.texSubImage2D
 ```
 
-在高层级耗时明显。
+耗时比较明显。
 
-所以第一阶段得到的结论是：
+于是首先怀疑：
 
-> 卡顿与 terrain GPU 渲染强相关，尤其要关注 Draw Call、terrain GRID 和纹理更新。
+```text
+是不是 Mapbox 每帧都在重新上传 DEM / 影像纹理？
+是不是 Terrain Mesh 每帧都在重建？
+是不是缓存没有生效？
+```
+
+继续观察后发现：
+
+- DEM / 影像纹理本身通常只有 512×512；
+- 停留一段时间后卡顿不会明显消失；
+- 同样的 Terrain draw call 会持续存在。
+
+因此可以判断：
+
+> 单纯“数据还没下载完”不是根因。
+
+`gl.texSubImage2D` 更像是高 Terrain 工作量下的一个伴随现象，而不是最核心原因。
 
 ---
 
-## 3. 第二阶段：先排除 DEM 自己继续细分
+## 3. 第二阶段：怀疑 Terrain Shader 太重
 
-当时 DEM 配置是：
+Terrain 渲染过程包含：
 
-```js
-map.addSource('local-model-dem', {
-    type: 'raster-dem',
-    tileSize: 512,
-    maxzoom: 15
-});
+```text
+规则网格
++
+DEM 高度纹理
++
+Vertex Shader 采样高度
++
+顶点抬升
++
+影像采样
 ```
 
-但地图继续放大到：
+所以一度怀疑：
+
+> 是否 Terrain Shader 计算量过大？
+
+曾考虑把 Terrain Shader 改成最简单版本，看看性能是否明显恢复。
+
+但用 Spector.js 继续观察后，发现一个更明显的问题：
+
+> 高 zoom 时，Terrain 的 draw call 数量本身就在暴增。
+
+也就是说，即使单次 draw 很快：
+
+```text
+1 次 draw 很快
+×
+几百个 proxy tile
+```
+
+一样会非常重。
+
+所以排查重点从：
+
+```text
+单个 Terrain draw 为什么慢
+```
+
+转向：
+
+```text
+为什么 Terrain draw 的数量会增加这么多
+```
+
+---
+
+## 4. DEM maxzoom=15，为什么 z19/z20 还能出现大量 Terrain Tile？
+
+这是排查过程中一个非常重要的认识。
+
+一开始容易认为：
+
+```text
+DEM maxzoom = 15
+```
+
+那么 Terrain 最多也只应该绘制到 z15。
+
+实际上不是。
+
+Mapbox Terrain 中：
+
+```text
+DEM 数据层级
+≠
+Terrain Proxy Tile 层级
+```
+
+DEM Source 可以停留在较低层级：
+
+```text
+DEM z15
+```
+
+但 Terrain 的 proxy / covering tile 仍然可以继续细分到：
 
 ```text
 z18
@@ -93,67 +156,41 @@ z19
 z20
 ```
 
-最初怀疑：
-
-```text
-是不是 DEM maxzoom=15 没生效，
-Mapbox 还在继续请求 z18 / z20 DEM？
-```
-
-于是开始统计 DEM tile。
-
-结果发现：
-
-```text
-DEM 实际数据仍然停留在 z15
-```
-
-也就是说：
-
-```text
-DEM maxzoom = 15
-```
-
-确实限制住了真实 DEM 数据层级。
+更高层级的 proxy tile 可以继续使用较低层级的 DEM 数据。
 
 所以：
 
-```text
-高层级卡顿
-≠
-DEM 继续加载 z18/z20 高程数据
-```
+> `raster-dem.maxzoom = 15` 并不会限制 Terrain Proxy 最大只能到 z15。
+
+这也解释了为什么没有 z19 DEM，依然能看到大量 z19 / z20 Terrain draw call。
 
 ---
 
-## 4. 第三阶段：发现 Terrain Proxy Tile 数量异常
+## 5. 加入 Terrain Cover 诊断
 
-接着开始打印 Mapbox terrain 内部数据。
-
-重点统计：
+为了确认 Mapbox 实际生成了多少 Terrain Proxy Tile，加入运行时诊断，重点观察：
 
 ```text
-terrain proxy tile
-```
-
-后来加入了：
-
-```text
+zoom
+pitch
+projection
+isOrthographic
+orthographicAtLowPitch
 proxySourceCache.getIds()
 terrain.proxyCoords
-proxy 按 zoom 分组
 DEM renderable tile
+terrain drape mode
 ```
 
-旧版本中观察到：
+旧场景高 zoom 时观察到：
 
-### zoom ≈ 18
+### z18 左右
 
 ```text
-proxy ≈ 158
+proxy tile ≈ 158
 ```
 
-并且同一帧不是只有 z18，而是同时存在：
+并且不是单一层级，而是混合：
 
 ```text
 z13
@@ -162,30 +199,13 @@ z16
 z18
 ```
 
-例如：
+### z20 左右
 
 ```text
-z13 : 3
-z15 : 9
-z16 : 16
-z18 : 130
+proxy tile ≈ 336
 ```
 
-总数：
-
-```text
-158
-```
-
-### zoom ≈ 20
-
-出现：
-
-```text
-proxy ≈ 336
-```
-
-并且同一帧存在：
+大致混合：
 
 ```text
 z15
@@ -195,429 +215,281 @@ z19
 z20
 ```
 
-例如：
+这说明：
 
-```text
-z15 : 9
-z16 : 16
-z18 : 60
-z19 : 235
-z20 : 16
-```
+> Mapbox 最终不是简单地用一层 z20 tile 覆盖屏幕，而是在生成一套多 LOD Terrain Cover。
 
-总数：
-
-```text
-336
-```
-
-这时候就能解释为什么 Draw Call 会增加：
-
-```text
-proxy 数量暴增
-    ↓
-更多 terrain tile 进入后续 terrain GRID 绘制
-    ↓
-Draw Call 增加
-```
-
-但是还不知道：
-
-> 为什么旧版本 proxy 会变成 158 / 336，而新版本只有几个？
+这也是后面理解问题的关键。
 
 ---
 
-## 5. 第四阶段：怀疑 deferred / elevated
+## 6. 排除 Proxy Cache 残留
 
-因为新版本使用 Mapbox Standard 后不卡，于是最初怀疑：
+一度怀疑：
 
-```text
-旧版 → deferred
-新版 → elevated
-```
+> 158 / 336 个 proxy tile 会不会只是之前加载过的历史缓存，没有及时删除？
 
-也就是：
+继续查看 Terrain Proxy Source Cache 的逻辑后发现：
 
-```text
-drapeRenderMode 不同
-```
+- 每次 update 都会重新计算当前 Terrain Cover；
+- 不再需要的 proxy tile 会被移除。
 
-可能改变了 terrain 渲染路径。
+因此：
 
-于是增加日志打印：
+> 当前看到的数百个 proxy tile，基本就是当前 Terrain Cover 真正需要的节点，而不是单纯缓存残留。
+
+于是问题进一步收敛到：
 
 ```text
-terrain.drapeRenderMode
-terrainUsingMockSource
-elevationSourceCache
+coveringTiles()
++
+Terrain LOD
 ```
 
-结果发现：
+---
 
-### 旧版
+## 7. 排除 Terrain Drape Mode 差异
+
+对比旧代码和新代码时，也曾怀疑：
+
+```text
+Standard Style
+vs
+Satellite Style
+```
+
+是不是走了不同 Terrain 渲染模式。
+
+诊断结果显示，两边都是：
 
 ```text
 terrainDrapeMode = 1
 terrainUsingMockSource = false
-elevationSourceCache = local-model-dem
 ```
 
-### 新版
+也就是说：
 
-```text
-terrainDrapeMode = 1
-terrainUsingMockSource = false
-elevationSourceCache = local-model-dem
-```
+- 两边都是真实 DEM；
+- 并不是一个场景用了 mock terrain；
+- 也不是某个特殊 drape mode 导致的巨大差异。
 
-两边完全一样。
-
-所以排除：
-
-```text
-deferred / elevated
-```
-
-是根因。
-
-结论修正为：
-
-> 新旧版本性能差异不是 drapeRenderMode 导致的。
+因此这一方向被排除。
 
 ---
 
-## 6. 第五阶段：怀疑 Globe / Mercator Projection
+## 8. 排除 Globe / Mercator 差异
 
-继续对比完整日志后发现：
+新代码一开始是 Standard Style，并且默认处于 Globe。
 
-### 新版 Standard
-
-```text
-projection = globe
-proxy = 4 ~ 6
-```
-
-### 旧版 Satellite
+新代码表现：
 
 ```text
-projection = mercator
-proxy = 158 / 336
+proxy tile ≈ 4～6
+非常流畅
 ```
 
-这时最大的差异看起来是：
+旧代码：
 
 ```text
-globe vs mercator
+Mercator
+proxy tile ≈ 158～336
+严重卡顿
 ```
 
-于是做控制变量实验。
+于是第一反应是：
 
----
+> Globe 是否比 Mercator 更容易控制 Terrain Tile 数量？
 
-## 7. 实验 1：Standard 强制改成 Mercator
-
-在新版本 Standard 中增加：
+随后把新代码明确改成：
 
 ```js
 projection: 'mercator'
 ```
 
-保持以下条件不变：
+结果：
 
 ```text
-style = Mapbox Standard
-DEM 不变
-terrain 不变
-pitch = 0
-zoom 测试方式不变
+仍然流畅
+proxy 仍然只有几个
 ```
 
-如果之前猜测成立，那么：
+因此可以排除：
 
-```text
-Standard + Mercator
-```
-
-应该重新出现：
-
-```text
-大量 proxy
-+
-卡顿
-```
-
-但实测结果：
-
-```text
-projection = mercator
-proxy ≈ 6
-仍然不卡
-```
-
-所以：
-
-```text
-globe
-```
-
-也不是根因。
+> Globe / Mercator 本身不是根因。
 
 ---
 
-## 8. 第六阶段：发现真正关键的差异 isOrthographic
+## 9. 关键发现：Low-Pitch Orthographic
 
-这次对比中出现了真正关键的变量。
+继续对比 Transform 状态后发现真正明显的差异。
 
-### 旧版 Satellite + Mercator
+流畅场景：
 
 ```text
 projection = mercator
-pitch = 0
+isOrthographic = true
+orthographicAtLowPitch = true
+proxy ≈ 4～6
+```
+
+卡顿场景：
+
+```text
+projection = mercator
 isOrthographic = false
 orthographicAtLowPitch = false
-proxy = 158 / 336
+proxy ≈ 158～336
 ```
 
-### 新版 Standard + Mercator
+Mapbox GL JS v3.25.0 中存在低俯仰角正交投影逻辑。
+
+大致条件：
+
+```ts
+get isOrthographic(): boolean {
+    return this.projection.name !== 'globe' &&
+        this._orthographicProjectionAtLowPitch &&
+        this.pitch < OrthographicPitchTranstionValue;
+}
+```
+
+其中低俯仰角切换阈值约为：
 
 ```text
-projection = mercator
+15°
+```
+
+也就是说：
+
+```text
+Mercator
++
+允许 Low-Pitch Orthographic
++
+pitch < 15°
+```
+
+时，Mapbox 可以使用 Orthographic Projection。
+
+---
+
+## 10. 最关键的控制实验
+
+为了排除 Style、Projection、DEM 等其他变量，在同一个场景中保持：
+
+```text
+Standard Style
+Mercator
 pitch = 0
-isOrthographic = true
-orthographicAtLowPitch = true
-proxy ≈ 6
+相同 DEM
+相同 zoom
 ```
 
-这时候才发现：
-
-> 虽然两边都是 `pitch = 0`，虽然两边都是 Mercator，但内部相机投影方式不同。
-
-旧版：
-
-```text
-Perspective
-```
-
-新版：
-
-```text
-Orthographic
-```
-
-这成为新的核心怀疑点。
-
----
-
-## 9. Mapbox 低 Pitch 正交投影逻辑
-
-Mapbox GL JS v3.25.0 内部存在：
-
-```js
-setOrthographicProjectionAtLowPitch(...)
-```
-
-低 pitch 时可以启用正交相机。
-
-逻辑上可以理解为：
-
-```text
-projection = mercator
-pitch < 15
-orthographicAtLowPitch = true
-        ↓
-isOrthographic = true
-```
-
-于是 Mapbox 使用：
-
-```text
-Orthographic Projection Matrix
-```
-
-而不是：
-
-```text
-Perspective Projection Matrix
-```
-
----
-
-## 10. 为什么这个变量会影响 Terrain Proxy
-
-Terrain proxy tile 来自：
-
-```text
-transform.coveringTiles()
-```
-
-而 `coveringTiles()` 会依赖当前相机的：
-
-```text
-projMatrix
-invProjMatrix
-Camera Frustum
-```
-
-调用关系可以理解为：
-
-```text
-Perspective / Orthographic
-        ↓
-Projection Matrix
-        ↓
-invProjMatrix
-        ↓
-Camera Frustum
-        ↓
-coveringTiles()
-        ↓
-Terrain Proxy Tile
-```
-
-所以改变相机投影方式，并不是只改变最终画面视觉效果。
-
-它会直接改变：
-
-```text
-Mapbox 认为当前相机到底能覆盖哪些 terrain tile
-```
-
----
-
-## 11. 正交投影下为什么 Proxy 少
-
-在 `pitch = 0` 时，正交投影可以近似理解为：
-
-```text
-      camera
-
-   |         |
-   |         |
-   |         |
-   |         |
-   +---------+
-      terrain
-```
-
-视线彼此平行。
-
-当前屏幕映射到 terrain 上的范围比较规整。
-
-因此 `coveringTiles()` 得到的 tile cover 通常比较紧凑，例如：
-
-```text
-+----+----+
-| P1 | P2 |
-+----+----+
-| P3 | P4 |
-+----+----+
-```
-
-实测基本只有：
-
-```text
-4 ~ 6 个 proxy
-```
-
----
-
-## 12. 透视投影下为什么 Proxy 暴增
-
-关闭低 pitch 正交后：
+只执行：
 
 ```js
 map.transform.setOrthographicProjectionAtLowPitch(false);
 ```
 
-即使：
+也就是只关闭：
 
 ```text
-pitch = 0
+Low-Pitch Orthographic
 ```
 
-内部仍然使用 Perspective。
-
-透视相机视锥可以近似理解成：
+结果非常明确：
 
 ```text
-        camera
-          *
-        /   \
-      /       \
-    /           \
-  /_______________\
-       terrain
+Orthographic 开启
+→ proxy ≈ 4～6
+→ 流畅
 ```
 
-随着距离增加，视锥范围会扩大。
-
-Terrain 的 `coveringTiles()` 又不是简单通过：
+关闭之后：
 
 ```text
-屏幕宽度 / tileSize
+Perspective
+→ proxy 数量大幅增加
+→ 高 zoom 卡顿重新出现
 ```
 
-来算 tile。
+因此目前最强的实验结论是：
 
-它会综合：
-
-```text
-Camera Frustum
-+
-Terrain AABB
-+
-Elevation
-+
-LOD 四叉树
-```
-
-判断当前应该保留哪些 tile、哪些 tile 继续细分。
-
-因此 Perspective 下会产生明显更多的 tile cover。
+> 高层级卡顿和低 pitch 下 Perspective Terrain Cover 生成大量 Proxy Tile 有直接关系。
 
 ---
 
-## 13. 为什么同一帧会出现 z15 / z16 / z18 / z19 / z20
+## 11. 先区分两个完全不同的问题
 
-这里还需要区分：
+理解后面的源码前，必须把两件事分开：
 
-```text
-coveringZoomLevel = 20
-```
+### A. 一个四叉树节点是否进入候选？
 
-和：
+主要由：
 
 ```text
-最终所有 tile 都是 z20
+Frustum Culling
 ```
 
-这两件事并不相同。
+决定。
 
-`coveringZoomLevel = 20` 更接近：
+### B. 这个节点进入候选之后，要继续细分到多深？
+
+主要由：
 
 ```text
-这次 LOD 最多允许细分到 z20
+LOD / shouldSplit()
 ```
 
-Mapbox 会沿着 terrain 四叉树不断判断：
+决定。
+
+这两个问题不能混在一起。
+
+---
+
+## 12. 关于 LOD：原来的直觉其实是对的
+
+Perspective 下：
 
 ```text
-shouldSplit ?
+画面中心
+→ 更接近相机
+
+画面边缘
+→ 距离相机更远
 ```
 
-如果当前节点需要更高细节：
+Mapbox 的 Terrain LOD 会根据 tile AABB 与 camera 的距离决定是否继续 split。
+
+可以简单理解为：
 
 ```text
-tile
- ↓
-拆成 4 个 child
- ↓
-继续判断
+近
+→ 继续细分
+→ 更高层级
 ```
 
-如果当前节点已经足够，就停在当前层级。
+```text
+远
+→ 更早停止细分
+→ 更粗层级
+```
 
-因此最终结果允许同时包含：
+因此：
+
+> “Perspective 下边缘 tile 更远，所以应该更容易满足 LOD、更早停止细分。”
+
+这个直觉是对的。
+
+也就是说，Perspective tile 多，并不是因为：
+
+```text
+边缘 tile 反而拆得更细
+```
+
+实际上外围 tile 通常拆得更粗。
+
+这也解释了为什么最终看到的是：
 
 ```text
 z15
@@ -627,292 +499,622 @@ z19
 z20
 ```
 
-这就是旧版本日志里看到大量多层级 proxy 的原因。
+多层级混合，而不是全部 z20。
 
 ---
 
-## 14. 实验 2：只关闭低 Pitch 正交投影
+## 13. Mapbox 确实做了真正的 Frustum Culling
 
-为了确认是不是这个原因，继续做控制变量实验。
+排查过程中还怀疑过：
 
-保持：
+> Mapbox 会不会没有真正判断 tile 是否在视锥体内，只是简单判断是否落在 Perspective 的某个投影范围里？
 
-```text
-Mapbox Standard
-projection = mercator
-DEM 不变
-terrain 不变
-pitch = 0
-zoom 不变
+继续看 `coveringTiles()` 源码，可以确认：
+
+Mapbox 会根据当前的逆投影矩阵创建真正的 Camera Frustum：
+
+```ts
+const cameraFrustum =
+    Frustum.fromInvProjectionMatrix(
+        this.invProjMatrix,
+        this.worldSize,
+        z,
+        zInMeters
+    );
 ```
 
-只修改：
+之后会用 Tile AABB 与这个 Frustum 做真实 3D 相交测试：
+
+```ts
+const intersectResult = it.aabb.intersects(cameraFrustum);
+
+if (intersectResult === 0) {
+    continue;
+}
+```
+
+必要时最终还会进行更精确的：
+
+```ts
+it.aabb.intersectsPrecise(cameraFrustum)
+```
+
+因此可以确认：
+
+> Mapbox 没有跳过真正的 Frustum Culling，也不是简单拿 Far Plane 的二维投影矩形做判断。
+
+---
+
+## 14. 真正关键：Terrain 使用的是 Deep 3D AABB
+
+这里是整个问题最关键的源码机制。
+
+Terrain 开启后，Mapbox 在计算 Terrain Cover 时，并不是把一个 tile 当成：
+
+```text
+地面上的一个二维矩形
+```
+
+而是给每个 tile 构造一个具有垂直高度范围的：
+
+```text
+3D AABB
+```
+
+可以理解为：
+
+```text
+        max elevation
+             ↑
+        +---------+
+        |         |
+        |  Tile   |
+        |  AABB   |
+        |         |
+        +---------+
+             ↓
+        min elevation
+```
+
+源码中有专门注释，大意是：
+
+> 在计算 Terrain Cover 时，为节点创建较深的 AABB，以确保 Terrain 节点与视锥正确相交。
+
+所以最终判断的是：
+
+```text
+Camera Frustum
+∩
+Deep Terrain AABB
+```
+
+而不是：
+
+```text
+Camera Frustum
+∩
+地表二维 tile
+```
+
+---
+
+## 15. 为什么 Perspective 和 Orthographic 看到的地面差不多，Proxy 数量却可以差几十倍？
+
+这是本次问题最核心的几何原因。
+
+假设：
+
+```text
+pitch = 0
+```
+
+为了保持当前 zoom 的屏幕尺度，两种投影在真实地面高度处看到的范围可以非常接近。
+
+例如：
+
+```text
+Orthographic 地面覆盖宽度 ≈ 100m
+Perspective  地面覆盖宽度 ≈ 100m
+```
+
+所以肉眼看到的画面差不多。
+
+但两种视体沿深度方向的形状完全不同。
+
+---
+
+## 16. Orthographic
+
+正交视体类似：
+
+```text
+|             |
+|             |
+|             |
+|             |
+|             |
+```
+
+它从 Near 到 Far：
+
+```text
+横截面宽度基本不变
+```
+
+如果地面处宽度是：
+
+```text
+100m
+```
+
+那么更深的位置仍然大约：
+
+```text
+100m
+```
+
+所以即使 Terrain AABB 很深，屏幕外的外围 Tile 通常还是不会和正交视体相交。
+
+它们能够很早在四叉树遍历中被剔除。
+
+---
+
+## 17. Perspective
+
+透视视锥类似：
+
+```text
+          camera
+             *
+            / \
+           /   \
+          /     \
+         /       \
+```
+
+它从 Near 到 Far：
+
+```text
+距离相机越远
+→ 横截面越宽
+```
+
+例如：
+
+```text
+真实地面处：100m
+更深位置：300m
+再深位置：800m
+```
+
+注意：
+
+> 这不是说 Mapbox 会超过 Far Plane 继续扩展。
+
+Near / Far 依然严格限定视锥。
+
+这里说的是：
+
+```text
+在 Near ～ Far 内部
+```
+
+Perspective Frustum 本身就随着离相机距离增大而张开。
+
+---
+
+## 18. 为什么高 Zoom 时这个问题特别明显？
+
+高 zoom 最大的特点是：
+
+```text
+camera 离真实地表非常近
+```
+
+假设低 zoom：
+
+```text
+camera 到地面 = 5000m
+Terrain AABB 再向下延伸 = 500m
+```
+
+相对比例只有：
+
+```text
+500 / 5000 = 10%
+```
+
+Perspective Frustum 在这段额外深度里不会扩张得特别夸张。
+
+但高 zoom：
+
+```text
+camera 到地面 = 50m
+Terrain AABB 向下 = 500m
+```
+
+那么：
+
+```text
+camera → 地面 = 50m
+camera → AABB 底部 = 550m
+```
+
+距离扩大：
+
+```text
+11 倍
+```
+
+Perspective 的横截面也会随着深度显著扩大。
+
+于是会出现：
+
+```text
+真实地面附近：
+视锥只覆盖很小范围
+```
+
+但是：
+
+```text
+Deep Terrain AABB 的较深位置：
+Perspective Frustum 已经张开很多
+```
+
+最终导致：
+
+> 一些地表 footprint 明明完全在屏幕外的 tile，其 3D AABB 更深的部分仍然会与 Perspective Frustum 相交。
+
+因此这些 Tile 不能被 Frustum Culling 提前剔除。
+
+---
+
+## 19. “相机贴近地面，很多地上 Tile 明明不在视锥里”为什么仍然不矛盾？
+
+高 zoom 时相机贴近地面，从直觉看：
+
+```text
+Perspective 视锥有很大一部分进入地下
+地面真正被看到的范围反而很小
+```
+
+这个判断本身没有错。
+
+关键是：
+
+> Mapbox Terrain Cover 判断的不是“地面平面上的可见范围”，而是 Deep Terrain AABB 与整个 3D Frustum 的相交。
+
+因此：
+
+```text
+地表可见范围很小
+```
+
+和：
+
+```text
+有多少 Deep Terrain AABB 能碰到 Perspective Frustum
+```
+
+并不是同一件事。
+
+这正是之前最容易混淆的地方。
+
+---
+
+## 20. 完整的 Proxy Tile 放大链路
+
+最终可以把高 zoom 卡顿过程总结为：
+
+```text
+zoom 升高
+↓
+camera 越来越贴近地表
+↓
+Terrain Cover 使用 Deep 3D AABB
+↓
+Perspective Frustum 沿深度快速张开
+↓
+大量屏幕外 Tile 的 Deep AABB 仍与 Frustum 相交
+↓
+这些四叉树节点无法在 Frustum Culling 阶段被提前剔除
+↓
+继续进入 Terrain LOD / shouldSplit()
+↓
+近处继续深拆
+远处较早停止
+↓
+产生大量多 LOD Proxy Tile
+↓
+z15 / z16 / z18 / z19 / z20 混合存在
+↓
+Terrain draw call 数量暴增
+↓
+CPU 提交 / GPU 绘制 / Texture 相关开销一起增加
+↓
+明显卡顿
+```
+
+---
+
+## 21. 为什么 Orthographic 下只有几个 Proxy？
+
+Orthographic 下：
+
+```text
+Deep AABB 仍然存在
+```
+
+但是：
+
+```text
+正交视体的横截面不会随着深度扩大
+```
+
+因此很多屏幕外节点：
+
+```text
+AABB ∩ Orthographic Frustum = 空
+```
+
+会很早被裁掉。
+
+所以只留下真正接近当前屏幕范围的少量节点：
+
+```text
+4～6 个 proxy
+```
+
+这也是为什么相同：
+
+```text
+Mercator
+pitch = 0
+zoom
+DEM
+```
+
+只切换：
+
+```text
+Orthographic / Perspective
+```
+
+就能出现几十倍 Proxy 数量差异。
+
+---
+
+## 22. 为什么最终会出现多个 LOD？
+
+Perspective 下即使外围 Tile 的 Deep AABB 通过 Frustum Test，它们通常离相机比较远。
+
+于是：
+
+```text
+shouldSplit()
+```
+
+会比较早停止。
+
+因此外围区域可能停在：
+
+```text
+z15
+z16
+z18
+```
+
+而中心更近的区域继续细分：
+
+```text
+z19
+z20
+```
+
+所以最终 Terrain Cover 是：
+
+```text
+外围：粗 LOD
++
+中央：细 LOD
+```
+
+这与实际诊断看到的层级分布一致。
+
+---
+
+## 23. 已排除的方向
+
+| 怀疑点 | 结论 |
+|---|---|
+| 网络还没加载完 | 排除，停留后仍然卡 |
+| 单纯 512×512 纹理太大 | 不是根因 |
+| `gl.texSubImage2D` | 更像高工作量下的症状 |
+| Terrain Shader 太重 | 不是主要矛盾 |
+| DEM `maxzoom=15` | 不会限制 Proxy 到 z15 |
+| Proxy Cache 没清 | 排除 |
+| Standard / Satellite Style 差异 | 不是根因 |
+| Globe / Mercator | 控制实验已排除 |
+| Terrain Drape Mode | 已排除 |
+| Far Plane 后继续扩展 | 不存在 |
+| Mapbox 没做真正 Frustum Culling | 不成立 |
+| Perspective 远处拆得更细 | 不成立，远处通常更早停止 |
+
+---
+
+## 24. 最关键的实验结果
+
+控制变量：
+
+```text
+Standard Style
+Mercator
+pitch = 0
+相同 DEM
+相同 zoom
+```
+
+### 开启 Low-Pitch Orthographic
+
+```text
+isOrthographic = true
+proxy ≈ 4～6
+流畅
+```
+
+### 关闭 Low-Pitch Orthographic
+
+执行：
 
 ```js
 map.transform.setOrthographicProjectionAtLowPitch(false);
-```
-
-也就是只把：
-
-```text
-Orthographic
-```
-
-改成：
-
-```text
-Perspective
 ```
 
 结果：
 
 ```text
-isOrthographic = true
-↓
-false
+isOrthographic = false
+proxy 数量明显增加
+高 zoom 卡顿重新出现
 ```
 
-同时：
-
-```text
-terrain proxy 数量重新明显增加
-```
-
-并且：
-
-```text
-高层级卡顿重新出现
-```
-
-这一步完成了真正的控制变量闭环。
+这个实验是目前最有说服力的证据。
 
 ---
 
-## 15. 为什么关闭正交后 Draw Call 会增加
+## 25. 最终根因
 
-`setOrthographicProjectionAtLowPitch(false)` 本身不会直接创建 Draw Call。
+本次问题目前最可信、同时也经过控制实验验证的根因是：
 
-真正的链路是：
+> **Mapbox GL JS v3.25.0 在低 pitch 的 Perspective 模式下，高 zoom 时 camera 非常贴近真实地表；Terrain Cover 又使用具有较大垂直范围的 Deep 3D AABB。Perspective Frustum 在 Near～Far 范围内会随深度张开，因此大量地表 footprint 已经在屏幕外的 Terrain Tile，其 Deep AABB 仍可能与 Frustum 相交。这些四叉树分支不能被提前剔除，继续进入 Terrain LOD，并最终形成大量多层级 Proxy Tile，导致 Terrain draw call 暴增和明显卡顿。**
 
-```text
-setOrthographicProjectionAtLowPitch(false)
-        ↓
-pitch = 0 时仍使用 Perspective
-        ↓
-Projection Matrix 改变
-        ↓
-Camera Frustum 改变
-        ↓
-coveringTiles() 的 terrain LOD 结果改变
-        ↓
-Terrain Proxy 从 4~6 个增长到上百个
-        ↓
-更多 Proxy 参与后续 terrain 渲染
-        ↓
-Draw Call 增加
-```
+Low-Pitch Orthographic 则不同：
+
+> **正交视体沿深度方向横截面基本不变，因此 Deep Terrain AABB 不会因为向深处延伸而额外扩大横向候选范围，大量外围节点可以更早被 Frustum Culling，最终 Proxy Tile 数量保持很低。**
 
 ---
 
-## 16. 为什么这些新增 Draw Call 很重
+## 26. 以后排查 Terrain 卡顿时优先看什么？
 
-Terrain proxy 最终不是简单：
+建议按这个顺序观察：
 
 ```text
-一个 2-triangle quad
+1. Terrain Proxy Tile 数量
+2. Proxy Tile 的 zoom 分布
+3. Terrain Draw Call 数量
+4. isOrthographic
+5. pitch
+6. zoom / camera height
+7. projection
+8. DEM renderable tile 数量
+9. terrain drape mode
+10. gl.texSubImage2D 是否只是伴随现象
 ```
 
-而是要进入：
+尤其应该优先看：
 
 ```text
-Proxy Texture
+proxy tile 数量
+```
+
+它比单独盯：
+
+```text
+gl.texSubImage2D
+```
+
+更容易快速判断 Terrain 高层级卡顿是不是由覆盖范围 / LOD 导致。
+
+---
+
+## 27. 这次排查得到的几个重要认知
+
+### 认知 1
+
+```text
+DEM 数据层级
+≠
+Terrain Proxy 层级
+```
+
+### 认知 2
+
+```text
+Frustum Culling
+```
+
+决定：
+
+```text
+哪些四叉树分支可以继续存在
+```
+
+而：
+
+```text
+LOD / shouldSplit()
+```
+
+决定：
+
+```text
+这些分支继续拆到多深
+```
+
+二者必须分开理解。
+
+### 认知 3
+
+Perspective 下：
+
+```text
+远处 tile
+→ LOD 更粗
+```
+
+这个直觉是正确的。
+
+Proxy 总数变多，不等于远处 Tile 拆得更细。
+
+### 认知 4
+
+Terrain 下真正参与裁剪的是：
+
+```text
+3D Deep AABB
+```
+
+而不是：
+
+```text
+地表二维 footprint
+```
+
+### 认知 5
+
+```text
+屏幕上看到的地面范围很小
+```
+
+不代表：
+
+```text
+Terrain Cover 的 3D 候选空间也很小
+```
+
+真正应该考虑的是：
+
+```text
+Camera Frustum
+∩
+Deep Terrain AABB
 +
-DEM
-    ↓
-Terrain GRID
-    ↓
-drawElements(TRIANGLES, ...)
-```
-
-Mapbox terrain 使用的是高密度 GRID。
-
-因此：
-
-```text
-1 个 proxy
-```
-
-对应的最终 terrain 绘制成本，远高于简单的两个三角形。
-
-当 proxy 从：
-
-```text
-6
-```
-
-增长到：
-
-```text
-158
-336
-```
-
-时，GPU 需要处理的 terrain grid draw 数量也会显著增加。
-
-所以会出现：
-
-```text
-大量 drawElements
-+
-大量 triangles / indices
-+
-GPU 帧时间上升
-+
-高 zoom 卡顿
-```
-
-这与最初在 Spector.js 中看到的现象正好对应起来。
-
----
-
-## 17. 最终根因
-
-最终问题不是：
-
-```text
-DEM maxzoom=15 失效
-```
-
-不是：
-
-```text
-deferred 比 elevated 慢
-```
-
-也不是：
-
-```text
-globe 比 mercator 快
-```
-
-真正的决定性变量是：
-
-```text
-低 Pitch 下是否启用 Orthographic
-```
-
-最终链路：
-
-```text
-旧 Satellite Style
-        ↓
-orthographicAtLowPitch = false
-        ↓
-pitch = 0 仍使用 Perspective
-        ↓
-Perspective Frustum
-        ↓
-Terrain coveringTiles() 产生大量多层级 proxy
-        ↓
-proxy = 158 / 336 ...
-        ↓
-大量 terrain GRID draw
-        ↓
-Draw Call 增长
-        ↓
-GPU 压力上升
-        ↓
-高层级卡顿
-```
-
-新版：
-
-```text
-Mapbox Standard
-        ↓
-orthographicAtLowPitch = true
-        ↓
-pitch = 0 使用 Orthographic
-        ↓
-Orthographic Frustum
-        ↓
-Terrain cover 更紧凑
-        ↓
-proxy ≈ 4 ~ 6
-        ↓
-terrain GRID draw 大幅减少
-        ↓
-不卡
+Quadtree LOD
 ```
 
 ---
 
-## 18. 最有说服力的控制变量实验
+## 28. 一句话总结
 
-最终最关键的验证不是“换 style”，而是：
-
-```text
-Standard + Mercator + Orthographic
-→ proxy 少
-→ 不卡
-```
-
-然后只执行：
-
-```js
-map.transform.setOrthographicProjectionAtLowPitch(false);
-```
-
-得到：
-
-```text
-Standard + Mercator + Perspective
-→ proxy 数量重新增长
-→ 重新卡顿
-```
-
-因为以下条件都保持不变：
-
-- style
-- projection
-- DEM
-- terrain
-- pitch
-- zoom
-- 本地影像
-- Three.js 模型
-
-只改变：
-
-```text
-Orthographic → Perspective
-```
-
-性能问题即可复现。
-
-因此可以确认：
-
-> 这次高层级 Terrain 卡顿的直接根因，是低 Pitch 下使用 Perspective 后，terrain `coveringTiles()` 产生了大量多层级 proxy tile，从而导致 terrain grid Draw Call 大量增加。
-
----
-
-## 19. 注意事项
-
-以下字段和方法属于 Mapbox GL JS 内部实现：
-
-```text
-map.transform
-setOrthographicProjectionAtLowPitch
-proxySourceCache
-terrain.proxyCoords
-```
-
-它们适合用于：
-
-- 调试
-- 定位
-- 验证 Mapbox GL JS v3.25.0 行为
-
-不建议直接作为长期稳定的业务 API 依赖。
-
-升级 Mapbox GL JS 版本后，应重新验证这些内部逻辑。
+> **这次 Mapbox Terrain 高层级卡顿，本质上不是“高 zoom 加载了更大的 DEM”，而是高 zoom 下 Perspective Camera 太贴近地表，配合 Terrain Cover 的 Deep AABB，使大量屏幕外四叉树节点仍然通过 3D Frustum Test，随后继续参与 LOD，最终造成 Proxy Tile 和 Terrain Draw Call 暴增；Low-Pitch Orthographic 因为视体沿深度不扩张，因此能把外围节点更早裁掉。**
