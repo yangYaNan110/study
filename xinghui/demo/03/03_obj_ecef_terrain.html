@@ -235,6 +235,8 @@
             });
 
             map.on('style.load', () => {
+                map.transform.setOrthographicProjectionAtLowPitch(true);
+
                 addImageLayer();
                 addTerrain();
                 addCustomECEFObjLayer();
@@ -246,6 +248,8 @@
             })
             map.on('zoom', logMapState);
             map.on('move', logMapState);
+            installTerrainCoverDiagnostics();
+
         }
 
         /** 注册本地瓦片影像源，并按当前配置添加或恢复其栅格图层。 */
@@ -632,6 +636,159 @@
 
             gui.open();
         }
+        // ================= Terrain cover 对比诊断（旧/新文件保持完全一致） =================
+        // 控制台手动执行：terrainCoverDiag()
+        // 重点用来比较：style / projection / worldSize / coveringZoomLevel /
+        // proxySource tileSize / 当前 proxy z-x-y / drapeRenderMode / DEM renderable tiles。
+        function logTerrainCoverDiagnostics(reason = 'manual') {
+            if (!map) return null;
+
+            const transform = map.transform;
+            const terrain = map.painter?._terrain;
+            const proxySourceCache = terrain?.proxySourceCache;
+            const proxySource = proxySourceCache?.getSource?.();
+            const proxyIds = proxySourceCache?.getIds?.() || [];
+            const proxyTileSize = proxySource?.tileSize;
+
+            const coveringOptions = proxySource ? {
+                tileSize: proxySource.tileSize,
+                minzoom: proxySource.minzoom,
+                maxzoom: proxySource.maxzoom,
+                roundZoom: proxySource.roundZoom,
+            } : null;
+
+            let coveringZoomLevel = '不可用';
+            try {
+                if (coveringOptions && typeof transform?.coveringZoomLevel === 'function') {
+                    coveringZoomLevel = transform.coveringZoomLevel(coveringOptions);
+                }
+            } catch (error) {
+                coveringZoomLevel = `读取失败: ${error?.message || error}`;
+            }
+
+            const proxyRows = proxyIds.map((id) => {
+                const tile = proxySourceCache?.getTileByID?.(id);
+                const tileID = tile?.tileID || id;
+                const canonical = tileID?.canonical;
+                return {
+                    key: tileID?.key ?? id,
+                    overscaledZ: tileID?.overscaledZ ?? canonical?.z ?? null,
+                    canonicalZ: canonical?.z ?? null,
+                    x: canonical?.x ?? null,
+                    y: canonical?.y ?? null,
+                    wrap: tileID?.wrap ?? 0,
+                };
+            });
+
+            const proxyZoomGroups = new Map();
+            for (const row of proxyRows) {
+                const key = `render z${row.overscaledZ} / canonical z${row.canonicalZ}`;
+                const group = proxyZoomGroups.get(key) || {
+                    zoom: key,
+                    tiles: 0,
+                    minX: row.x,
+                    maxX: row.x,
+                    minY: row.y,
+                    maxY: row.y,
+                };
+                group.tiles += 1;
+                if (row.x != null) {
+                    group.minX = group.minX == null ? row.x : Math.min(group.minX, row.x);
+                    group.maxX = group.maxX == null ? row.x : Math.max(group.maxX, row.x);
+                }
+                if (row.y != null) {
+                    group.minY = group.minY == null ? row.y : Math.min(group.minY, row.y);
+                    group.maxY = group.maxY == null ? row.y : Math.max(group.maxY, row.y);
+                }
+                proxyZoomGroups.set(key, group);
+            }
+
+            const demSourceCache = terrain?.sourceCache;
+            const demRenderableIds = demSourceCache?.getRenderableIds?.() || [];
+            const demRows = demRenderableIds.map((id) => {
+                const tile = demSourceCache?.getTileByID?.(id);
+                const tileID = tile?.tileID || id;
+                const canonical = tileID?.canonical;
+                return {
+                    overscaledZ: tileID?.overscaledZ ?? canonical?.z ?? null,
+                    canonicalZ: canonical?.z ?? null,
+                    x: canonical?.x ?? null,
+                    y: canonical?.y ?? null,
+                    wrap: tileID?.wrap ?? 0,
+                };
+            });
+
+            let projection = null;
+            try {
+                projection = map.getProjection?.() || transform?.getProjection?.() || null;
+            } catch (_) {
+                projection = transform?.projection ? {name: transform.projection.name} : null;
+            }
+
+            const snapshot = {
+                reason,
+                styleName: map.getStyle?.()?.name || '未命名',
+                styleImports: map.getStyle?.()?.imports?.map((item) => item.id).join(', ') || '无',
+                zoom: Number(map.getZoom().toFixed(4)),
+                tileZoom: transform?.tileZoom,
+                pitch: Number(map.getPitch().toFixed(2)),
+                bearing: Number(map.getBearing().toFixed(2)),
+                center: map.getCenter().toArray().map((v) => Number(v.toFixed(8))).join(', '),
+                projection: projection?.name || transform?.projection?.name || '未知',
+                isOrthographic: transform?.isOrthographic ?? '未知',
+                orthographicAtLowPitch: transform?._orthographicProjectionAtLowPitch ?? '未知',
+                worldSize: transform?.worldSize,
+                coveringZoomLevel,
+                proxySourceTileSize: proxyTileSize ?? '未知',
+                proxySourceMinZoom: proxySource?.minzoom ?? '未知',
+                proxySourceMaxZoom: proxySource?.maxzoom ?? '未知',
+                proxySourceRoundZoom: proxySource?.roundZoom ?? '未知',
+                proxySourceGetIdsCount: proxyIds.length,
+                terrainProxyCoordsCount: terrain?.proxyCoords?.length ?? '未知',
+                terrainDrapeMode: map.style?.terrain?.drapeRenderMode ?? '未知',
+                elevationSourceCache: terrain?.sourceCache?.id ?? '未知',
+                terrainUsingMockSource: terrain?.isUsingMockSource?.() ?? '未知',
+                demRenderableTiles: demRenderableIds.length,
+                visibleDemTiles: terrain?._visibleDemTiles?.length ?? '未知',
+            };
+
+            console.group(`[terrain cover diag] ${reason} | ${snapshot.styleName} | z${snapshot.zoom}`);
+            console.table(snapshot);
+            console.log('projection object:', projection);
+            console.log('covering options (proxy source):', coveringOptions);
+            console.log('proxySourceCache:', proxySourceCache);
+            console.log('terrain:', terrain);
+            console.log(`proxy getIds() 明细，共 ${proxyRows.length} 个：`);
+            console.table(proxyRows);
+            console.log('proxy 按 zoom 分组：');
+            console.table([...proxyZoomGroups.values()]);
+            console.log(`DEM renderable 明细，共 ${demRows.length} 个：`);
+            console.table(demRows);
+            console.groupEnd();
+
+            return {
+                snapshot,
+                projection,
+                coveringOptions,
+                proxyRows,
+                proxyZoomSummary: [...proxyZoomGroups.values()],
+                demRows,
+            };
+        }
+
+        function installTerrainCoverDiagnostics() {
+            if (!map || map.__terrainCoverDiagInstalled) return;
+            map.__terrainCoverDiagInstalled = true;
+
+            window.terrainCoverDiag = () => logTerrainCoverDiagnostics('manual console');
+
+            // 只在状态稳定时打印，避免 zoom/move 过程中刷屏并影响测试结果。
+            map.on('moveend', () => logTerrainCoverDiagnostics('moveend'));
+            // map.on('idle', () => logTerrainCoverDiagnostics('idle'));
+
+            console.log('Terrain cover 对比日志已安装。控制台可执行 terrainCoverDiag()。');
+        }
+        // ================= Terrain cover 对比诊断结束 =================
 
         init();
     </script>
