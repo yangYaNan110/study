@@ -62,7 +62,7 @@ let modelTransform;
 // 复用该 Vector2 读取真实绘制缓冲尺寸，避免每帧创建对象。
 const drawingSize = new THREE.Vector2();
 // 保存深度比较开关与容差；epsilon 是投影后 0~1 depth 单位，仅用于实验验证。
-const depthComparison = { enabled: false, epsilon: 0.00002 };
+const depthComparison = { enabled: true, epsilon: 0.00002 };
 
 /**
  * 将 WGS84 地心地固坐标（ECEF，米）转换为经度、纬度与椭球高。
@@ -169,8 +169,6 @@ function createComposer() {
     const target = new THREE.WebGLRenderTarget(drawingSize.x, drawingSize.y, {
         // 为 OBJ 内部遮挡分配深度附件。
         depthBuffer: true,
-        // 当前不需要模板测试，因此不分配 stencil 附件。
-        stencilBuffer: false,
         // 使用 8 位 RGBA 颜色纹理，满足当前普通颜色合成需求。
         type: THREE.UnsignedByteType,
     });
@@ -206,8 +204,6 @@ function createTerrainDepthTarget() {
     terrainDepthTarget = new THREE.WebGLRenderTarget(drawingSize.x, drawingSize.y, {
         // 分配深度附件，作为 terrain 深度复制的目标。
         depthBuffer: true,
-        // 当前不需要 stencil 附件。
-        stencilBuffer: false,
         // 分配普通颜色附件以保证 framebuffer 完整；该颜色不会被最终 shader 使用。
         type: THREE.UnsignedByteType,
     });
@@ -216,7 +212,7 @@ function createTerrainDepthTarget() {
     // Three r160 没有 initRenderTarget()；临时绑定一次 target，让 Three 在内部创建对应 GPU framebuffer。
     renderer.setRenderTarget(terrainDepthTarget);
     // 只清刚创建的离屏 target，不会清除 Mapbox 已绘制到默认 framebuffer 的内容。
-    renderer.clear(true, true, false);
+    renderer.clear();
     // 切回默认 framebuffer；render 回调开始前还会 resetState，所以这次初始化不会影响正式绘制。
     renderer.setRenderTarget(null);
 }
@@ -245,13 +241,19 @@ function resizeComposerIfNeeded() {
 function captureTerrainDepth(gl) {
     // WebGL1 没有 framebuffer blit API，无法执行该实验路径。
     if (!(gl instanceof WebGL2RenderingContext)) {
+        console.log("");
+
         // 仅首次警告，避免每一帧重复输出。
         if (!captureTerrainDepth.warned) console.warn('terrain depth 捕获需要 WebGL2，本帧将退回模型优先。');
         // 记录警告已输出。
         captureTerrainDepth.warned = true;
         // 返回失败，让最终 shader 退回第一版规则。
         return false;
+    } else {
+        console.log("是webgl2....");
+
     }
+
     // 在改动任何 WebGL 绑定前记录 Mapbox 当前 framebuffer；null 也合法，表示浏览器默认 framebuffer。
     const mapboxFramebuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING);
     // 取得 Three 为 terrainDepthTarget 创建的底层 WebGL framebuffer；这是实验性内部字段。
@@ -298,11 +300,12 @@ function createCompositeScene() {
         // 指定按 alpha 输出模型颜色的片元 shader。
         fragmentShader: compositeFragmentShader,
         // 允许输出 alpha 并参与普通透明混合。
-        transparent: true,
+        // transparent: true,
+        // opacity: 0.8,
         depthTest: false,
         depthWrite: false,
         // 使用标准 source-over alpha 混合，将 OBJ 叠加在现有地图颜色上。
-        blending: THREE.NormalBlending,
+        // blending: THREE.NormalBlending,
     });
     // 创建覆盖 NDC -1 到 1 的平面，并将它加入合成场景。
     compositeScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), compositeMaterial));
@@ -472,6 +475,7 @@ function addModelLayer() {
             renderer.render(compositeScene, compositeCamera);
             // 请求 Mapbox 持续重绘，以响应相机移动和资源加载后的画面更新。
             map.triggerRepaint();
+
         },
     });
 }
