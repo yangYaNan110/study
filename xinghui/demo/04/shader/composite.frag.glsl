@@ -16,6 +16,12 @@ void main() {
     // 深度比较不可用时退回第一版规则：模型整体显示在 terrain 上方。
     if (!depthOcclusionEnabled) {
         gl_FragColor = model;
+        // 与模型优先分支保持完全相同的最终颜色输出转换。
+        // 按 renderer.toneMapping 与 toneMappingExposure 将 HDR/线性光照结果映射到显示范围。
+        #include <tonemapping_fragment>
+
+        // 将线性色彩编码为 renderer.outputColorSpace（默认是 sRGB），使屏幕显示亮度与直接渲染一致。
+        #include <colorspace_fragment>
         return;
     }
 
@@ -26,6 +32,9 @@ void main() {
     // 模型在 terrain 前面，或仅略微落后但仍处于容差范围内时，显示模型。
     if (modelZ <= terrainZ + depthEpsilon) {
         gl_FragColor = model;
+        // 与模型优先分支保持完全相同的最终颜色输出转换。
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
         return;
     }
 
