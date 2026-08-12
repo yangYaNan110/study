@@ -47,6 +47,8 @@ let modelCamera;
 let renderer;
 // 保存负责模型离屏渲染的 EffectComposer。
 let composer;
+// 保存从 Mapbox 默认 framebuffer 复制出的 terrain 深度 target。
+let terrainDepthTarget;
 // 保存最终将模型纹理叠加回 Mapbox 默认 framebuffer 的场景。
 let compositeScene;
 // 保存合成全屏 Quad 使用的无透视相机。
@@ -59,6 +61,8 @@ let objModel;
 let modelTransform;
 // 复用该 Vector2 读取真实绘制缓冲尺寸，避免每帧创建对象。
 const drawingSize = new THREE.Vector2();
+// 保存深度比较开关与容差；epsilon 是投影后 0~1 depth 单位，仅用于实验验证。
+const depthComparison = { enabled: false, epsilon: 0.00002 };
 
 /**
  * 将 WGS84 地心地固坐标（ECEF，米）转换为经度、纬度与椭球高。
@@ -192,6 +196,32 @@ function createComposer() {
 }
 
 /**
+ * 创建保存 Mapbox terrain 深度的独立 target。
+ * 颜色附件只用于保持 framebuffer 完整，最终合成只采样它的 depthTexture。
+ */
+function createTerrainDepthTarget() {
+    // 读取包含设备像素比后的实际 GPU 绘制尺寸。
+    renderer.getDrawingBufferSize(drawingSize);
+    // 创建一个与 Mapbox 默认 framebuffer 同尺寸的离屏 target。
+    terrainDepthTarget = new THREE.WebGLRenderTarget(drawingSize.x, drawingSize.y, {
+        // 分配深度附件，作为 terrain 深度复制的目标。
+        depthBuffer: true,
+        // 当前不需要 stencil 附件。
+        stencilBuffer: false,
+        // 分配普通颜色附件以保证 framebuffer 完整；该颜色不会被最终 shader 使用。
+        type: THREE.UnsignedByteType,
+    });
+    // 将 target 深度附件创建为可在最终 shader 中采样的深度纹理。
+    terrainDepthTarget.depthTexture = new THREE.DepthTexture(drawingSize.x, drawingSize.y);
+    // Three r160 没有 initRenderTarget()；临时绑定一次 target，让 Three 在内部创建对应 GPU framebuffer。
+    renderer.setRenderTarget(terrainDepthTarget);
+    // 只清刚创建的离屏 target，不会清除 Mapbox 已绘制到默认 framebuffer 的内容。
+    renderer.clear(true, true, false);
+    // 切回默认 framebuffer；render 回调开始前还会 resetState，所以这次初始化不会影响正式绘制。
+    renderer.setRenderTarget(null);
+}
+
+/**
  * 若 Mapbox canvas 的实际绘制尺寸改变，则同步调整 composer 离屏目标尺寸。
  */
 function resizeComposerIfNeeded() {
@@ -201,7 +231,43 @@ function resizeComposerIfNeeded() {
     if (composer.readBuffer.width !== drawingSize.x || composer.readBuffer.height !== drawingSize.y) {
         // 同步 composer 内部两个 ping-pong target 的尺寸。
         composer.setSize(drawingSize.x, drawingSize.y);
+        // 同步 terrain 深度 target 尺寸，使两个深度纹理的 UV 与默认 framebuffer 一一对应。
+        terrainDepthTarget.setSize(drawingSize.x, drawingSize.y);
     }
+}
+
+/**
+ * 将 custom layer 之前 Mapbox 已写入默认 framebuffer 的深度复制到 terrainDepthTarget。
+ * 整个过程都在 GPU 内：默认 depth buffer -> terrainDepthTarget.depthTexture，不读取 CPU。
+ * @param {WebGL2RenderingContext} gl Mapbox 传入的共享 WebGL context。
+ * @returns {boolean} 本帧是否成功得到可用的 terrain 深度。
+ */
+function captureTerrainDepth(gl) {
+    // WebGL1 没有 framebuffer blit API，无法执行该实验路径。
+    if (!(gl instanceof WebGL2RenderingContext)) {
+        // 仅首次警告，避免每一帧重复输出。
+        if (!captureTerrainDepth.warned) console.warn('terrain depth 捕获需要 WebGL2，本帧将退回模型优先。');
+        // 记录警告已输出。
+        captureTerrainDepth.warned = true;
+        // 返回失败，让最终 shader 退回第一版规则。
+        return false;
+    }
+    // 在改动任何 WebGL 绑定前记录 Mapbox 当前 framebuffer；null 也合法，表示浏览器默认 framebuffer。
+    const mapboxFramebuffer = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+    // 取得 Three 为 terrainDepthTarget 创建的底层 WebGL framebuffer；这是实验性内部字段。
+    const terrainFramebuffer = renderer.properties.get(terrainDepthTarget).__webglFramebuffer;
+    // framebuffer 尚未存在时不能复制。
+    if (!terrainFramebuffer) return false;
+    // 将 Mapbox 在进入 custom layer 时实际绑定的 framebuffer 绑定为读取源。
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, mapboxFramebuffer);
+    // 将独立 terrain target 绑定为写入目标。
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, terrainFramebuffer);
+    // 只复制全屏深度；depth blit 只能使用 NEAREST 过滤。
+    gl.blitFramebuffer(0, 0, drawingSize.x, drawingSize.y, 0, 0, drawingSize.x, drawingSize.y, gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+    // 恢复默认 framebuffer，防止原生 WebGL 调用遗留绑定状态。
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // 返回成功。
+    return true;
 }
 
 /**
@@ -214,8 +280,19 @@ function createCompositeScene() {
     compositeCamera = new THREE.Camera();
     // 创建采样模型颜色纹理的 shader 材质。
     compositeMaterial = new THREE.ShaderMaterial({
-        // 声明将由 render 回调填充的模型颜色纹理 uniform。
-        uniforms: { modelColor: { value: null } },
+        // 声明最终深度合成所需的模型颜色、模型深度、terrain 深度与比较参数。
+        uniforms: {
+            // 保存 composer 输出的模型 RGBA 纹理。
+            modelColor: { value: null },
+            // 保存模型离屏 target 的深度纹理。
+            modelDepth: { value: null },
+            // 保存从 Mapbox 默认 framebuffer 复制出的 terrain 深度纹理。
+            terrainDepth: { value: null },
+            // 控制是否启用 terrain / model 深度比较。
+            depthOcclusionEnabled: { value: false },
+            // 保存模型可略微落后于 terrain 仍优先显示的深度容差。
+            depthEpsilon: { value: depthComparison.epsilon },
+        },
         // 指定全屏 Quad 顶点 shader。
         vertexShader: compositeVertexShader,
         // 指定按 alpha 输出模型颜色的片元 shader。
@@ -317,8 +394,8 @@ function addModelLayer() {
         id: 'model-postprocess',
         // 声明这是 Mapbox custom layer。
         type: 'custom',
-        // 使用 2D 模式，最终合成阶段不与 Mapbox terrain 共享深度测试。
-        renderingMode: '2d',
+        // 使用 3D 模式，保证回调位于 Mapbox terrain 的共享 depth 渲染流程中。
+        renderingMode: '3d',
         // 图层加入地图时只执行一次，用来初始化 Three 资源。
         onAdd(mapInstance, gl) {
             // 创建 OBJ 与灯光所在的 Three 场景。
@@ -348,10 +425,11 @@ function addModelLayer() {
             createCompositeScene();
             // 创建模型独立 color/depth target 与 composer Pass 链。
             createComposer();
+            // 创建用于保存当前帧 Mapbox terrain 深度的独立 target。
+            createTerrainDepthTarget();
             // 开始异步加载 OBJ。
             loadModel();
-            // 保存 map，render 回调末尾将用它请求下一帧。
-            this.map = mapInstance;
+            // map 使用模块顶部的共享变量；不要依赖 render 回调中的 this，因为 Mapbox 不保证它绑定 custom layer 对象。
         },
         // Mapbox 每帧调用该函数，并提供当前相机对应的 4x4 投影矩阵数组。
         render(gl, matrix) {
@@ -367,6 +445,8 @@ function addModelLayer() {
             // 合并 Mapbox 投影与模型局部变换，作为本帧模型相机投影矩阵。
             modelCamera.projectionMatrix.copy(mapMatrix.multiply(localMatrix));
 
+            // 仅在深度比较开关开启时复制 terrain depth；默认基线模式不执行实验性 depth blit。
+            const hasTerrainDepth = depthComparison.enabled && captureTerrainDepth(gl);
             // 清除 Three 对共享 WebGL context 的状态缓存，避免继承 Mapbox 的绑定状态。
             renderer.resetState();
             // 在窗口尺寸或 DPR 变化后同步 composer 的离屏 target 尺寸。
@@ -380,10 +460,18 @@ function addModelLayer() {
             renderer.setRenderTarget(null);
             // 将 composer 离屏输出的模型颜色纹理传给最终合成 shader。
             compositeMaterial.uniforms.modelColor.value = composer.readBuffer.texture;
-            // 绘制无深度测试的全屏 Quad，按 alpha 将模型覆盖到地图已有颜色之上。
+            // 将 OBJ 离屏 target 的深度纹理传给最终合成 shader。
+            compositeMaterial.uniforms.modelDepth.value = composer.readBuffer.depthTexture;
+            // 将当前帧复制的 terrain 深度纹理传给最终合成 shader。
+            compositeMaterial.uniforms.terrainDepth.value = terrainDepthTarget.depthTexture;
+            // 仅在 terrain 深度复制成功且开关开启时执行 shader 中的深度遮挡判断。
+            compositeMaterial.uniforms.depthOcclusionEnabled.value = hasTerrainDepth && depthComparison.enabled;
+            // 将当前可调容差同步给 shader。
+            compositeMaterial.uniforms.depthEpsilon.value = depthComparison.epsilon;
+            // 绘制无深度测试的全屏 Quad，由 shader 决定模型是否被 terrain 遮挡。
             renderer.render(compositeScene, compositeCamera);
             // 请求 Mapbox 持续重绘，以响应相机移动和资源加载后的画面更新。
-            this.map.triggerRepaint();
+            map.triggerRepaint();
         },
     });
 }
