@@ -463,6 +463,7 @@ function addModelLayer() {
             composer.render();
 
             // 再次重置状态，为切换回 Mapbox 默认 framebuffer 做准备。
+            // 它不会清除颜色、深度纹理或场景数据。
             renderer.resetState();
             // 绑定 null，即 Mapbox 默认 framebuffer；此处不 clear，所以 terrain / DOM 颜色仍然存在。
             renderer.setRenderTarget(null);
