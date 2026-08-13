@@ -167,6 +167,8 @@ function createComposer() {
     renderer.getDrawingBufferSize(drawingSize);
     // 在设备可支持的范围内最多启用 4 倍 MSAA，专门平滑 OBJ 离屏颜色纹理的几何边缘。
     const modelMsaaSamples = Math.min(4, renderer.capabilities.maxSamples);
+    console.log("modelMsaaSamples:::", modelMsaaSamples, renderer.capabilities.maxSamples);
+
     // 创建独立 target；它不使用 Mapbox 默认 framebuffer，因此 terrain 深度不会进入此处。
     const target = new THREE.WebGLRenderTarget(drawingSize.x, drawingSize.y, {
         // 为 OBJ 内部遮挡分配深度附件。
@@ -174,7 +176,7 @@ function createComposer() {
         // 使用 8 位 RGBA 颜色纹理，满足当前普通颜色合成需求。
         type: THREE.UnsignedByteType,
         // 让 GPU 对模型颜色进行多重采样；WebGL2 / Three 会在 target 被采样前自动 resolve 为普通纹理。
-        samples: modelMsaaSamples,
+        // samples: modelMsaaSamples,
     });
     // 将深度从仅供 GPU 固定功能测试的 renderbuffer 改为可被未来 shader 采样的纹理。
     target.depthTexture = new THREE.DepthTexture(drawingSize.x, drawingSize.y);
@@ -305,7 +307,6 @@ function createCompositeScene() {
         fragmentShader: compositeFragmentShader,
         // 允许输出 alpha 并参与普通透明混合。
         // transparent: true,
-        // opacity: 0.8,
         depthTest: false,
         depthWrite: false,
         // 使用标准 source-over alpha 混合，将 OBJ 叠加在现有地图颜色上。
