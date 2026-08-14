@@ -15,11 +15,11 @@ void main() {
     //}
     //return;
     // 没有模型像素时丢弃片元，Mapbox 默认 framebuffer 的已有颜色会被保留。
-    if (model.a == 0.0) discard;
-
+    if(model.a == 0.0)
+        discard;
 
     // 深度比较不可用时退回第一版规则：模型整体显示在 terrain 上方。
-    if (!depthOcclusionEnabled) {
+    if(!depthOcclusionEnabled) {
         gl_FragColor = model;
         // 与模型优先分支保持完全相同的最终颜色输出转换。
         // 按 renderer.toneMapping 与 toneMappingExposure 将 HDR/线性光照结果映射到显示范围。
@@ -34,16 +34,34 @@ void main() {
     float modelZ = texture2D(modelDepth, vUv).x;
     float terrainZ = texture2D(terrainDepth, vUv).x;
 
-    // 模型在 terrain 前面，或仅略微落后但仍处于容差范围内时，显示模型。
-    if (modelZ <= terrainZ + depthEpsilon) {
-        //如果存在透明度 应该要融合一些边缘否则有明显锯齿 
+    if(modelZ <= terrainZ + depthEpsilon) {
         gl_FragColor = model;
         // 与模型优先分支保持完全相同的最终颜色输出转换。
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
         return;
     }
-
+    //如果是模型边缘
+    // if(model.a < 1.0) {
+    //     //如果特别靠近遮挡
+    //     if(modelZ <= terrainZ + depthEpsilon) {
+    //         gl_FragColor = model;
+    //         // 与模型优先分支保持完全相同的最终颜色输出转换。
+    //         #include <tonemapping_fragment>
+    //         #include <colorspace_fragment>
+    //         return;
+    //     }
+    // } else {
+    //     //如果不是边缘 且考的特别近 --- 直接使用模型本身的颜色
+    //     if(modelZ <= terrainZ + depthEpsilon) {
+    //         //vec3 modelStraightColor = model.rgb / model.a;
+    //         gl_FragColor = model;
+    //         // 与模型优先分支保持完全相同的最终颜色输出转换。
+    //         #include <tonemapping_fragment>
+    //         #include <colorspace_fragment>
+    //         return;
+    //     }
+    // }
     // terrain 明显更近时丢弃模型片元，主 framebuffer 中 terrain 的颜色得以保留。
     discard;
 }
