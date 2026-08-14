@@ -34,34 +34,28 @@ void main() {
     // 读取模型和 terrain 在同一屏幕像素的投影深度；数值越小表示越靠近相机。
     float modelZ = texture2D(modelDepth, vUv).x;
     float terrainZ = texture2D(terrainDepth, vUv).x;
-    //如果模型深度小于地形深度的阈值 就按模型显示 解决闪面  同时如果是模型边缘 返回模型 这样后面会和底图颜色融合 消除交界处的锯齿
-    if(modelZ <= terrainZ + depthEpsilon || model.a < 0.99) {
+    //如果模型深度小于地形深度的阈值 就按模型显示 解决闪面 
+    if(modelZ <= terrainZ + depthEpsilon) {
         gl_FragColor = model;
         // 与模型优先分支保持完全相同的最终颜色输出转换。
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
         return;
     }
-    //如果是模型边缘
-    // if(model.a < 1.0) {
-    //     //如果特别靠近遮挡
-    //     if(modelZ <= terrainZ + depthEpsilon) {
-    //         gl_FragColor = model;
-    //         // 与模型优先分支保持完全相同的最终颜色输出转换。
-    //         #include <tonemapping_fragment>
-    //         #include <colorspace_fragment>
-    //         return;
-    //     }
-    // } else {
-    //     //如果不是边缘 且考的特别近 --- 直接使用模型本身的颜色
-    //     if(modelZ <= terrainZ + depthEpsilon) {
-    //         //vec3 modelStraightColor = model.rgb / model.a;
-    //         gl_FragColor = model;
-    //         // 与模型优先分支保持完全相同的最终颜色输出转换。
-    //         #include <tonemapping_fragment>
-    //         #include <colorspace_fragment>
-    //         return;
-    //     }
+    //如果是边缘部分  虽然深度相差可能比较大 但是因为直接使用底图颜色会造成锯齿 因为这可能是交互的地方
+    if(model.a < 1.0) {
+        float depthDiff = modelZ - terrainZ;
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        // #include <tonemapping_fragment>
+        // #include <colorspace_fragment>
+        return;
+    }
+    //================测试代码 验证是否与锯齿有关==================
+    // if(model.a >= 1.0) {
+    //     gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    //     // #include <tonemapping_fragment>
+    //     // #include <colorspace_fragment>
+    //     return;
     // }
     // terrain 明显更近时丢弃模型片元，主 framebuffer 中 terrain 的颜色得以保留。
     discard;
