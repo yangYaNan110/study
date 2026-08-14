@@ -460,6 +460,11 @@ function addModelLayer() {
             // 在窗口尺寸或 DPR 变化后同步 composer 的离屏 target 尺寸。
             resizeComposerIfNeeded();
             // 将 OBJ 绘制到 composer 的独立 target；terrain 的 depth 不会参与此阶段。
+            // ===========================================想要优化的地方=================================================
+            //这里后期改进一下 使用renderer吧模型绘制到一个指定的frameBuffer里  得到他的colorBuffer和depthBuffer
+            //然后再单独使用一个frameBuffer实例 把底图的colorBuffer和depthBuffer拷贝到这个frameBuffer里
+            //最后用composer统一进行绘制 先根据上面两个frameBuffer的深度buffer 以及颜色数据 得到一个解决闪面后的最终数据
+            //在这个最终数据的基础上 可以加一些其他后处理 这样的路线才是更好的
             composer.render();
 
             // 再次重置状态，为切换回 Mapbox 默认 framebuffer 做准备。
