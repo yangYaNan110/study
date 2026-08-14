@@ -9,10 +9,11 @@ varying vec2 vUv;
 void main() {
     // 读取已在独立 target 内完成模型自身遮挡的 RGBA 结果。
     vec4 model = texture2D(modelColor, vUv);
-    //gl_FragColor = vec4(vec3(model.a), 1.0);
-    //if(model.a < 1.0 && model.a > 0.0){
-         //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-    //}
+    // gl_FragColor = vec4(vec3(model.a), 1.0);
+    // if(model.a < 1.0 && model.a > 0.0) {
+    //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    //     return;
+    // }
     //return;
     // 没有模型像素时丢弃片元，Mapbox 默认 framebuffer 的已有颜色会被保留。
     if(model.a == 0.0)
@@ -33,8 +34,8 @@ void main() {
     // 读取模型和 terrain 在同一屏幕像素的投影深度；数值越小表示越靠近相机。
     float modelZ = texture2D(modelDepth, vUv).x;
     float terrainZ = texture2D(terrainDepth, vUv).x;
-
-    if(modelZ <= terrainZ + depthEpsilon) {
+    //如果模型深度小于地形深度的阈值 就按模型显示 解决闪面  同时如果是模型边缘 返回模型 这样后面会和底图颜色融合 消除交界处的锯齿
+    if(modelZ <= terrainZ + depthEpsilon || model.a < 0.99) {
         gl_FragColor = model;
         // 与模型优先分支保持完全相同的最终颜色输出转换。
         #include <tonemapping_fragment>
