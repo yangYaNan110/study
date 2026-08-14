@@ -9,9 +9,14 @@ varying vec2 vUv;
 void main() {
     // 读取已在独立 target 内完成模型自身遮挡的 RGBA 结果。
     vec4 model = texture2D(modelColor, vUv);
-
+    //gl_FragColor = vec4(vec3(model.a), 1.0);
+    //if(model.a < 1.0 && model.a > 0.0){
+         //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+    //}
+    //return;
     // 没有模型像素时丢弃片元，Mapbox 默认 framebuffer 的已有颜色会被保留。
     if (model.a == 0.0) discard;
+
 
     // 深度比较不可用时退回第一版规则：模型整体显示在 terrain 上方。
     if (!depthOcclusionEnabled) {
@@ -31,6 +36,7 @@ void main() {
 
     // 模型在 terrain 前面，或仅略微落后但仍处于容差范围内时，显示模型。
     if (modelZ <= terrainZ + depthEpsilon) {
+        //如果存在透明度 应该要融合一些边缘否则有明显锯齿 
         gl_FragColor = model;
         // 与模型优先分支保持完全相同的最终颜色输出转换。
         #include <tonemapping_fragment>

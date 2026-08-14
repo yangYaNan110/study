@@ -176,7 +176,7 @@ function createComposer() {
         // 使用 8 位 RGBA 颜色纹理，满足当前普通颜色合成需求。
         type: THREE.UnsignedByteType,
         // 让 GPU 对模型颜色进行多重采样；WebGL2 / Three 会在 target 被采样前自动 resolve 为普通纹理。
-        // samples: modelMsaaSamples,
+        samples: modelMsaaSamples,
     });
     // 将深度从仅供 GPU 固定功能测试的 renderbuffer 改为可被未来 shader 采样的纹理。
     target.depthTexture = new THREE.DepthTexture(drawingSize.x, drawingSize.y);
@@ -185,8 +185,14 @@ function createComposer() {
     composer = new EffectComposer(renderer, target);
     // 禁止 composer 将最后一个 pass 直接输出到 Mapbox 默认 framebuffer。
     composer.renderToScreen = false;
-    // 添加模型渲染 Pass；OBJ 材质的 depthTest/depthWrite 仍在这里正常生效。
-    composer.addPass(new RenderPass(scene, modelCamera));
+    // 创建模型渲染 Pass；OBJ 材质的 depthTest/depthWrite 仍在这里正常生效。
+    const modelRenderPass = new RenderPass(scene, modelCamera);
+    // 指定离屏 target 每帧清为黑色且 alpha 为 0；未被模型覆盖的 MSAA 子采样因此保持透明。
+    // modelRenderPass.clearColor = new THREE.Color(0x000000);
+    // 透明清屏让 MSAA resolve 后的模型边缘 alpha 近似反映三角形对子像素的覆盖率。
+    // modelRenderPass.clearAlpha = 0;
+    // 将配置好的模型渲染 Pass 加入 composer。
+    composer.addPass(modelRenderPass);
     // 添加复制 Pass，使 composer 输出稳定保留在 readBuffer；后续可替换为模型深度处理 Pass。
     //这里可以进一步添加其他pass 来继续做后处理
     // composer.addPass(new ShaderPass({
@@ -306,11 +312,11 @@ function createCompositeScene() {
         // 指定按 alpha 输出模型颜色的片元 shader。
         fragmentShader: compositeFragmentShader,
         // 允许输出 alpha 并参与普通透明混合。
-        // transparent: true,
+        transparent: true,
         depthTest: false,
         depthWrite: false,
         // 使用标准 source-over alpha 混合，将 OBJ 叠加在现有地图颜色上。
-        // blending: THREE.NormalBlending,
+        blending: THREE.NormalBlending,
     });
     // 创建覆盖 NDC -1 到 1 的平面，并将它加入合成场景。
     compositeScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), compositeMaterial));
