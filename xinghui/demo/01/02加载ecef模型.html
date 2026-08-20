@@ -172,7 +172,7 @@
         }
 
         async function loadDemTile(x, y) {
-            const tileRoot = new URL('./3dobj/tiles/', window.location.href).href;
+            const tileRoot = new URL('../3dobj/tiles/', window.location.href).href;
             const response = await fetch(`${tileRoot}${flattenedModelDemZoom}/${x}/${y}.png`);
             if (!response.ok) throw new Error(`DEM 瓦片加载失败：${response.status}`);
             const bitmap = await createImageBitmap(await response.blob());

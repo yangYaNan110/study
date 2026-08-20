@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TilesRenderer } from '../node_modules/3d-tiles-renderer/build/index.three.js';
 
 const TILESET_URL = new URL(
-    '../../01/落汤鸡/目标三维模型-精模/output_tileset/tileset.json',
+    '../../落汤鸡/目标三维模型-精模/output_tileset/tileset.json',
     import.meta.url
 ).href;
 
