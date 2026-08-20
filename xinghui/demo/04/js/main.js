@@ -24,7 +24,11 @@ const MODEL_ORIGIN = [-95.92740622846694, 41.11305358174491];
 // 定义 OBJ 局部 ECEF 坐标转换为绝对 ECEF 坐标时使用的米单位偏移。
 const ECEF_OFFSET = new THREE.Vector3(-496845.585, -4787606.399, 4171388.400);
 // 定义相对本 HTML 的 OBJ 文件地址。
-const MODEL_URL = '../落汤鸡/目标三维模型-精模/目标1三维模型-精模_ecef.obj';
+// const MODEL_URL = '../落汤鸡/目标三维模型-精模/目标1三维模型-精模_ecef.obj';
+const MODEL_URL = new URL(
+    '../../落汤鸡/目标三维模型-精模/目标1三维模型-精模_ecef.obj',
+    import.meta.url,
+).href;
 // 定义本地 Mapbox raster-dem source 的唯一 ID。
 const DEM_SOURCE_ID = 'local-model-dem';
 // 定义本地 DOM raster source 的唯一 ID。
