@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "01_todoApp\\x64\\Debug\\TaskStorage.obj",
+            "outputs": [
+                "01_todoApp\\x64\\Debug\\TaskStorage.h.obj.dt.module.json",
+                "01_todoApp\\x64\\Debug\\TaskStorage.h.obj.dt.d.json"
+            ],
+            "requires": []
+        }
+    ]
+}
