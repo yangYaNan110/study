@@ -15,30 +15,36 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
+    <None Include="readMe.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Component.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="src\main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TransformComponent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HealthComponent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\Actor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\PlayerActor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EnemyActor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Component.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TransformComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HealthComponent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="src\Actor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PlayerActor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EnemyActor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

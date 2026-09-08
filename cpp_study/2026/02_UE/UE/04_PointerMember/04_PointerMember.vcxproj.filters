@@ -15,30 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
+    <None Include="readMe.md" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\Actor.cpp">
+    <ClCompile Include="src\Player.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\PlayerActor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EnemyActor.cpp">
+    <ClCompile Include="src\Weapon.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Actor.h">
+    <ClInclude Include="src\Player.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\PlayerActor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EnemyActor.h">
+    <ClInclude Include="src\Weapon.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

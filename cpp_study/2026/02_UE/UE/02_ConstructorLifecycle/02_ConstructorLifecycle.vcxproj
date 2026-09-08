@@ -21,10 +21,9 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{19ad6d2d-35f2-43f5-b149-1608ec1d7dc9}</ProjectGuid>
-    <RootNamespace>demo01</RootNamespace>
+    <ProjectGuid>{7dc10610-81a7-4408-81fa-f116ff48389b}</ProjectGuid>
+    <RootNamespace>My02ConstructorLifecycle</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>01_demo01</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -140,18 +139,20 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="README.md" />
+    <None Include="readMe.md" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Actor.cpp" />
-    <ClCompile Include="src\EnemyActor.cpp" />
+    <ClCompile Include="src\Armor.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\PlayerActor.cpp" />
+    <ClCompile Include="src\Weapon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Actor.h" />
-    <ClInclude Include="src\EnemyActor.h" />
+    <ClInclude Include="src\Armor.h" />
     <ClInclude Include="src\PlayerActor.h" />
+    <ClInclude Include="src\Weapon.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

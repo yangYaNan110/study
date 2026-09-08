@@ -24,3 +24,13 @@ token.js
 xinghui/demo/3dobj.tar
 .vscode/settings.json
 test/
+
+# Visual Studio / MSVC generated files under cpp_study/2026/02_UE
+/cpp_study/2026/02_UE/**/x64/
+/cpp_study/2026/02_UE/**/x86/
+/cpp_study/2026/02_UE/**/[Dd]ebug/
+/cpp_study/2026/02_UE/**/[Rr]elease/
+/cpp_study/2026/02_UE/**/*.vcxproj.user
+/cpp_study/2026/02_UE/**/*.suo
+/cpp_study/2026/02_UE/**/*.VC.db
+/cpp_study/2026/02_UE/**/*.VC.VC.opendb

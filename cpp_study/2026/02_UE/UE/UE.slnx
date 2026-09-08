@@ -3,5 +3,18 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="demo01/demo01.vcxproj" />
+  <Folder Name="/解决方案项/">
+    <File Path="UE前置_C++练习计划.md" />
+  </Folder>
+  <Project Path="02_ConstructorLifecycle/02_ConstructorLifecycle.vcxproj" Id="7dc10610-81a7-4408-81fa-f116ff48389b" />
+  <Project Path="03_VirtualDestructor/03_VirtualDestructor.vcxproj" Id="a0fca5b4-f7fa-42c3-85a7-02fed17cacf8" />
+  <Project Path="04_PointerMember/04_PointerMember.vcxproj" Id="d9bcc595-b2b6-4f51-a072-f75aae60ef20" />
+  <Project Path="05_StructVector3/05_StructVector3.vcxproj" Id="6084f925-c500-4657-b5a7-d67751f9a276" />
+  <Project Path="06_EnumState/06_EnumState.vcxproj" Id="469876e1-4ebb-4866-aeeb-54796d7a8f74" />
+  <Project Path="07_Template/07_Template.vcxproj" Id="678508ac-3528-48bd-935c-12f03444baf6" />
+  <Project Path="08_Cast/08_Cast.vcxproj" Id="6cee574d-2e45-4a67-81d6-cb528407da35" />
+  <Project Path="09_Component/09_Component.vcxproj" Id="d3d050a9-a5a3-4552-85cd-b14e4945406c" />
+  <Project Path="10_Lifecycle/10_Lifecycle.vcxproj" Id="602e1608-64e3-4b77-882f-4ac26738b2e8" />
+  <Project Path="11_Macro/11_Macro.vcxproj" Id="0bc301fb-5e1d-4f8d-93bb-c0222811d26c" />
+  <Project Path="demo01/demo01.vcxproj" Id="19ad6d2d-35f2-43f5-b149-1608ec1d7dc9" />
 </Solution>
