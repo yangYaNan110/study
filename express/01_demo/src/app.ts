@@ -5,6 +5,7 @@ export const app = express();
 import { userRouter } from "./modules/user/user.router.js";
 import { loggerMiddleware } from "./middleware/logger.middleware.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
+import { notFoundMiddleware } from "./middleware/not-found.middleware.js";
 
 //注册解析json中间件
 app.use(express.json());
@@ -18,6 +19,8 @@ app.use("/users", userRouter);
 app.get("/", (req, res) => {
   res.send("Hello, World!22");
 });
-
+// 前面所有路由都没有匹配
+// 就会走到这里
+app.use(notFoundMiddleware);
 // 注册错误中间件
 app.use(errorMiddleware);
