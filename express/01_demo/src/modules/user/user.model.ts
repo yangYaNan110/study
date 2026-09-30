@@ -1,16 +1,18 @@
-import type { CreateUserData, User } from "./user.type.js";
+import type { User } from "./user.type.js";
 
 class UserModel {
   private users: User[] = [
     {
       id: 1,
-      name: "Tom",
-      age: 20,
+      username: "admin",
+      password: "123456",
+      role: "admin",
     },
     {
       id: 2,
-      name: "Jack",
-      age: 25,
+      username: "tom",
+      password: "123456",
+      role: "user",
     },
   ];
 
@@ -22,16 +24,8 @@ class UserModel {
     return this.users.find((user) => user.id === id);
   }
 
-  create(data: CreateUserData): User {
-    const user: User = {
-      id: Date.now(),
-      name: data.name,
-      age: data.age,
-    };
-
-    this.users.push(user);
-
-    return user;
+  findByUsername(username: string): User | undefined {
+    return this.users.find((user) => user.username === username);
   }
 }
 
