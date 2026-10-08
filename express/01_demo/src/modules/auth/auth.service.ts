@@ -3,8 +3,7 @@ import jwt from "jsonwebtoken";
 import { userService } from "../user/user.service.js";
 
 import { AppError } from "../../utils/app-error.js";
-
-const JWT_SECRET = "my-secret-key";
+import { env } from "../../config/env.js";
 
 class AuthService {
   login(username: string, password: string) {
@@ -24,9 +23,9 @@ class AuthService {
         username: user.username,
         role: user.role,
       },
-      JWT_SECRET,
+      env.jwtSecret,
       {
-        expiresIn: "1h",
+        expiresIn: env.jwtExpiresIn as any,
       },
     );
 

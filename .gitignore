@@ -34,3 +34,6 @@ test/
 /cpp_study/2026/02_UE/**/*.suo
 /cpp_study/2026/02_UE/**/*.VC.db
 /cpp_study/2026/02_UE/**/*.VC.VC.opendb
+
+
+.env
