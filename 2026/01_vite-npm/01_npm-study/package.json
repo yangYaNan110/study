@@ -1,0 +1,17 @@
+{
+  "name": "01_npm-study",
+  "version": "1.0.0",
+  "description": "练习npm和vite",
+  "license": "ISC",
+  "author": "yyn",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "build": "echo building..."
+  },
+  "dependencies": {
+    "lodash": "^4.18.1"
+  }
+}
