@@ -1,6 +1,7 @@
 {
   "name": "my-react-ui-study",
-  "version": "1.0.2",
+  "version": "1.1.0",
+  "private": true,
   "description": "",
   "main": "./my-dist/index.js",
   "scripts": {
