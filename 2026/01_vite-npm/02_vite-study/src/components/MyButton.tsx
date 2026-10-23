@@ -9,7 +9,7 @@ export function MyButton(props: MyButtonProps) {
 
   return (
     <button onClick={() => setCount(count + 1)}>
-      {props.title}：{count}
+      【组件库新版本】{props.title}：{count}
     </button>
   );
 }

@@ -6,6 +6,7 @@ function n(n) {
 	return /* @__PURE__ */ t("button", {
 		onClick: () => i(r + 1),
 		children: [
+			"【组件库新版本】",
 			n.title,
 			"：",
 			r
