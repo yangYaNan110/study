@@ -7,7 +7,9 @@
     "dev": "vite",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && vite build"
+    "build:js": "vite build",
+    "build:types": "tsc -p tsconfig.build.json",
+    "build": "npm run typecheck && npm run build:js && npm run build:types"
   },
   "keywords": [],
   "author": "",
@@ -27,7 +29,10 @@
     "react-dom": "^19.0.0"
   },
   "exports": {
-    ".": "./my-dist/index.js"
+    ".": {
+      "types": "./my-dist/index.d.ts",
+      "import": "./my-dist/index.js"
+    }
   },
   "files": [
     "my-dist"
