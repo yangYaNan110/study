@@ -9,10 +9,12 @@
     "typecheck": "tsc --noEmit",
     "build:js": "vite build",
     "build:types": "tsc -p tsconfig.build.json",
-    "build": "npm run typecheck && npm run build:js && npm run build:types",
+    "build": "npm run typecheck && npm run clean && npm run build:js && npm run build:types",
     "dev:js": "vite build --watch",
     "dev:types": "tsc -p tsconfig.build.json --watch",
-    "dev:lib": "concurrently -k \"npm:dev:js\" \"npm:dev:types\""
+    "dev:lib": "concurrently -k \"npm:dev:js\" \"npm:dev:types\"",
+    "prepack": "npm run build",
+    "clean": "node -e \"require('node:fs').rmSync('my-dist', { recursive: true, force: true })\""
   },
   "keywords": [],
   "author": "",

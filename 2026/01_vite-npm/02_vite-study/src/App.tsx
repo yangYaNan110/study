@@ -1,5 +1,5 @@
-// import {MyButton} from './index';
-import { MyButton } from "my-react-ui-study";
+import {MyButton} from './index';
+// import { MyButton } from "my-react-ui-study";
 export function App() {
 
   return (
