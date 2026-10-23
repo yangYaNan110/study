@@ -4,9 +4,9 @@ import { jsxs as t } from "react/jsx-runtime";
 function n(n) {
 	let [r, i] = e(0);
 	return /* @__PURE__ */ t("button", {
+		style: { fontSize: n.size ?? 16 },
 		onClick: () => i(r + 1),
 		children: [
-			"【组件库新版本】",
 			n.title,
 			"：",
 			r
