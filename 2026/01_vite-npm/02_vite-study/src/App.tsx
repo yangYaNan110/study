@@ -1,15 +1,14 @@
-import { useState } from 'react';
-
+import {MyButton} from './index';
+// import { MyButton } from "my-react-ui-study";
 export function App() {
-  const [count, setCount] = useState(0);
-  const age:number = 18;
+
   return (
     <div>
-      <h1>React Fast Refresh 测试成功</h1>
+      <h1>我的react组件库练习111</h1>
 
-      <button onClick={() => setCount(count + 1)}>
-        点击次数：{count}{age}
-      </button>
+      <MyButton title="按钮A" />
+      <MyButton title="按钮B" />
+
     </div>
   );
 }

@@ -10,5 +10,15 @@ export default defineConfig({
   build: {
     outDir: "my-dist",
     sourcemap: true,
+
+    lib: {
+      entry: "src/index.ts",
+      formats: ["es"],
+      fileName: "index",
+    },
+
+    rolldownOptions: {
+      external: ["react", "react-dom", "react/jsx-runtime"],
+    },
   },
 });
