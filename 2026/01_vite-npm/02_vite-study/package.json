@@ -11,7 +11,8 @@
     "build:types": "tsc -p tsconfig.build.json",
     "build": "npm run typecheck && npm run build:js && npm run build:types",
     "dev:js": "vite build --watch",
-    "dev:types": "tsc -p tsconfig.build.json --watch"
+    "dev:types": "tsc -p tsconfig.build.json --watch",
+    "dev:lib": "concurrently -k \"npm:dev:js\" \"npm:dev:types\""
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "typescript": "^7.0.2",
